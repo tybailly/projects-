@@ -1,0 +1,255 @@
+#include <iostream>
+#include <random>
+#include <string>
+#include <vector>
+#include <chrono>
+#include <thread>
+#include <array>
+
+// Created by Tyler Bailly
+// V.1 Created 04/2022 
+// V.2 Started 06/2022
+// Modernized Refactor: 2026
+
+// Game Configuration Constants
+const int MAX_PLAYERS = 5;
+const int BLACKJACK = 21;
+const int DEALER_STAND_ON = 17;
+
+// Using statements localized or kept clean
+using namespace std::this_thread;
+using namespace std::chrono;
+
+// Random Number Generation Setup
+static std::random_device seeder;
+static std::mt19937 engine(seeder());
+static std::uniform_int_distribution<int> dist(1, 11);
+
+// Struct to manage player state cleanly without scattered globals
+struct Player {
+    std::string name;
+    int handTotal = 0;
+};
+
+// Function Declarations (Prototyping)
+int getValidPlayerCount();
+void registerPlayers(std::vector<Player>& playersList, int amount);
+int handleAceInput();
+int pDecide(int initialHandTotal);
+int dDecide(int initialHandTotal);
+void determineWinner(int pFinal, int dFinal);
+
+int main()
+{
+    std::vector<Player> activePlayers;
+    int amountOfPlayers = 0;
+    bool keepPlaying = true;
+
+    std::cout << "Welcome to Blackjack!\n";
+
+    while (keepPlaying) 
+    {
+        // Player Setup / Retention Logic
+        if (activePlayers.empty()) 
+        {
+            amountOfPlayers = getValidPlayerCount();
+            registerPlayers(activePlayers, amountOfPlayers);
+        } 
+        else 
+        {
+            int decide = 0;
+            std::cout << "\nAre the same players returning to play? (1 for Yes, 2 for No): ";
+            std::cin >> decide;
+            
+            if (decide != 1) 
+            {
+                activePlayers.clear();
+                amountOfPlayers = getValidPlayerCount();
+                registerPlayers(activePlayers, amountOfPlayers);
+            }
+        }
+
+        // --- Core Game Loop for a Single Round ---
+        // Note: As per original architecture, game plays one active round vs dealer
+        
+        // Initial Deal
+        int pCards[2] = { dist(engine), dist(engine) };
+        int dCards[2] = { dist(engine), dist(engine) };
+
+        sleep_until(system_clock::now() + seconds(1));
+        std::cout << "\n--- Dealing Cards (Ace = 1 or 11) ---\n";
+
+        int playerTotal = 0;
+        for (int i = 0; i < 2; i++) 
+        {
+            std::cout << "Card " << (i + 1) << ": " << pCards[i] << "\n";
+            if (pCards[i] == 11) 
+            {
+                pCards[i] = handleAceInput();
+            }
+            playerTotal += pCards[i];
+        }
+
+        // Player's Turn
+        playerTotal = pDecide(playerTotal);
+
+        // Dealer's Turn
+        int dealerTotal = dCards[0] + dCards[1];
+        dealerTotal = dDecide(dealerTotal);
+
+        // Results Stage
+        std::cout << "\n=================================\n";
+        std::cout << "Your final card amount: " << playerTotal << "\n";
+        std::cout << "The dealer's final card amount: " << dealerTotal << "\n";
+        std::cout << "=================================\n";
+
+        determineWinner(playerTotal, dealerTotal);
+
+        // Replay Check (Fixes the infinite loop/stack overflow of original main() recursion)
+        int playAgainChoice = 0;
+        std::cout << "\nPlay again? (1 for Yes, 2 for No): ";
+        std::cin >> playAgainChoice;
+
+        if (playAgainChoice != 1) 
+        {
+            keepPlaying = false;
+            std::cout << "Goodbye!\n";
+        } 
+        else 
+        {
+            // Clear screen substitute
+            std::cout << std::string(20, '\n'); 
+        }
+    }
+
+    return 0;
+}
+
+// Handles player amount input safely without infinite loops or stack overflow recursion
+int getValidPlayerCount() 
+{
+    int amount = 0;
+    while (true) 
+    {
+        std::cout << "Enter how many players will play (1-" << MAX_PLAYERS << "): ";
+        std::cin >> amount;
+
+        if (std::cin.fail() || amount < 1 || amount > MAX_PLAYERS) {
+            std::cin.clear(); // Clear error flag
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard bad input
+            std::cout << "Invalid input. Please enter a number between 1 and " << MAX_PLAYERS << ".\n";
+        } else {
+            return amount;
+        }
+    }
+}
+
+// Populates our vector of Player structs
+void registerPlayers(std::vector<Player>& playersList, int amount) 
+{
+    playersList.resize(amount);
+    for (int i = 0; i < amount; i++) 
+    {
+        std::cout << "Enter Player " << (i + 1) << " Name: ";
+        std::cin >> playersList[i].name;
+    }
+    
+    std::cout << "\n";
+    for (const auto& player : playersList) 
+    {
+        std::cout << "Welcome " << player.name << "!\n";
+    }
+}
+
+// Reusable handler for choosing Ace values
+int handleAceInput() 
+{
+    int choice = 0;
+    while (true) 
+    {
+        std::cout << "You got an Ace! How do you want it scored? (1 for '11', 2 for '1'): ";
+        std::cin >> choice;
+        if (choice == 1) return 11;
+        if (choice == 2) return 1;
+        std::cout << "Invalid selection. ";
+    }
+}
+
+// Handles Player Hit/Stand decision logic
+int pDecide(int initialHandTotal) 
+{
+    int currentTotal = initialHandTotal;
+    int decision = 0;
+
+    while (currentTotal < BLACKJACK) 
+    {
+        std::cout << "\nYour current total is: " << currentTotal << "\n";
+        std::cout << "Press 1 to HIT, or 2 to STAY: ";
+        std::cin >> decision;
+
+        if (decision == 2) break;
+        if (decision != 1) {
+            std::cout << "Invalid choice.\n";
+            continue;
+        }
+
+        int hit = dist(engine);
+        std::cout << "The dealer hands you a new card... It's a " << hit << "!\n";
+        
+        if (hit == 11) 
+        {
+            hit = handleAceInput();
+        }
+
+        currentTotal += hit;
+    }
+    return currentTotal;
+}
+
+// Handles Dealer logical AI rule constraints
+int dDecide(int initialHandTotal) 
+{
+    int currentTotal = initialHandTotal;
+    std::cout << "\nDealer reveals hand total: " << currentTotal << "\n";
+
+    while (currentTotal < DEALER_STAND_ON) 
+    {
+        std::cout << "The dealer decides to hit...\n";
+        sleep_until(system_clock::now() + seconds(1));
+        
+        int hit = dist(engine);
+        // Standard casino rule: Dealer treats Ace automatically as 11 unless they would bust, then 1
+        if (hit == 11 && currentTotal + 11 > BLACKJACK) {
+            hit = 1;
+        }
+        
+        std::cout << "Dealer drew a " << hit << ".\n";
+        currentTotal += hit;
+    }
+    return currentTotal;
+}
+
+// Refactored Win/Loss evaluations for clean execution flow
+void determineWinner(int pFinal, int dFinal) 
+{
+    if (pFinal > BLACKJACK) 
+    {
+        std::cout << "You have bust! The dealer wins.\n";
+    } 
+    else if (dFinal > BLACKJACK) 
+    {
+        std::cout << "The dealer bust! You have won!\n";
+    } 
+    else if (pFinal == dFinal) 
+    {
+        std::cout << "Push! You have both tied.\n";
+    } 
+    else if (pFinal > dFinal) 
+    {
+        std::cout << "You have won!!!!!!!\n";
+    } 
+    else 
+    {
+        std::cout << "You have lost. Dealer wins.\n";
+    }
+}
