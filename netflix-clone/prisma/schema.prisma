@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TitleType {
+  MOVIE
+  SERIES
+}
+
+enum TitleStatus {
+  PENDING
+  TRANSCODING
+  READY
+  FAILED
+}
+
+enum RenditionStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  profiles     Profile[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  avatarUrl String?
+  isKids    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  watchlist WatchlistEntry[]
+  progress  WatchProgress[]
+
+  @@index([userId])
+}
+
+model Genre {
+  id     String       @id @default(cuid())
+  name   String       @unique
+  titles TitleGenre[]
+}
+
+model Title {
+  id              String      @id @default(cuid())
+  type            TitleType   @default(MOVIE)
+  name            String
+  description     String
+  releaseYear     Int?
+  maturityRating  String?
+  posterUrl       String?
+  backdropUrl     String?
+  durationSeconds Int?
+  status          TitleStatus @default(PENDING)
+  sourceS3Key     String?
+  hlsManifestKey  String?
+  failureReason   String?
+  createdAt       DateTime    @default(now())
+
+  genres        TitleGenre[]
+  renditions    VideoRendition[]
+  watchlistedBy WatchlistEntry[]
+  progress      WatchProgress[]
+
+  @@index([status])
+}
+
+model TitleGenre {
+  titleId String
+  genreId String
+  title   Title @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, genreId])
+}
+
+model VideoRendition {
+  id          String          @id @default(cuid())
+  titleId     String
+  title       Title           @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  resolution  String
+  bitrateKbps Int
+  s3Key       String
+  status      RenditionStatus @default(PENDING)
+
+  @@index([titleId])
+}
+
+model WatchlistEntry {
+  id        String   @id @default(cuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titleId   String
+  title     Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+
+  @@unique([profileId, titleId])
+}
+
+model WatchProgress {
+  id              String   @id @default(cuid())
+  profileId       String
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titleId         String
+  title           Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  positionSeconds Int      @default(0)
+  durationSeconds Int?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([profileId, titleId])
+}
