@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { WatchlistButton } from "@/components/WatchlistButton";
+import { getPlayAction } from "@/lib/providers";
 
 export default async function TitleDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -13,7 +14,7 @@ export default async function TitleDetailPage({ params }: { params: { id: string
 
   const title = await prisma.title.findUnique({
     where: { id: params.id },
-    include: { genres: { include: { genre: true } } }
+    include: { genres: { include: { genre: true } }, provider: true }
   });
   if (!title) notFound();
 
@@ -40,9 +41,19 @@ export default async function TitleDetailPage({ params }: { params: { id: string
 
       <div className="px-6 py-6 sm:px-12">
         {title.status === "READY" ? (
-          <Link href={`/watch/${title.id}`} className="mb-4 inline-block rounded bg-white px-6 py-2 font-semibold text-black hover:bg-neutral-200">
-            ▶ Play
-          </Link>
+          (() => {
+            const play = getPlayAction(title);
+            return (
+              <Link
+                href={play.href}
+                target={play.external ? "_blank" : undefined}
+                rel={play.external ? "noopener noreferrer" : undefined}
+                className="mb-4 inline-block rounded bg-white px-6 py-2 font-semibold text-black hover:bg-neutral-200"
+              >
+                {play.label}
+              </Link>
+            );
+          })()
         ) : (
           <p className="mb-4 rounded bg-neutral-800 px-4 py-2 text-sm text-neutral-300">
             {title.status === "FAILED" ? "Processing failed for this title." : "This title is still processing and isn't playable yet."}
@@ -50,6 +61,12 @@ export default async function TitleDetailPage({ params }: { params: { id: string
         )}
 
         <WatchlistButton titleId={title.id} initialInList={Boolean(watchlistEntry)} />
+
+        {title.provider && (
+          <p className="mt-4 text-sm text-neutral-400">
+            Available on <span style={{ color: title.provider.brandColor }}>{title.provider.name}</span>
+          </p>
+        )}
 
         <p className="mt-6 max-w-2xl text-neutral-200">{title.description}</p>
 

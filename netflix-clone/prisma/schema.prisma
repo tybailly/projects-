@@ -25,6 +25,25 @@ enum RenditionStatus {
   FAILED
 }
 
+enum TitleSource {
+  UPLOAD
+  PROVIDER
+}
+
+model Provider {
+  id                String  @id @default(cuid())
+  name              String  @unique
+  slug              String  @unique
+  tmdbProviderId    Int     @unique
+  brandColor        String
+  // "{query}" is replaced with the URL-encoded title name to build a deep
+  // link out to that service's own search results — there is no public API
+  // that returns a direct per-title watch URL for these services.
+  searchUrlTemplate String
+
+  titles Title[]
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
@@ -70,11 +89,21 @@ model Title {
   failureReason   String?
   createdAt       DateTime    @default(now())
 
+  // UPLOAD titles are self-hosted (transcoded by worker/transcode.ts) and
+  // play via /watch/[id]. PROVIDER titles are synced from TMDb metadata for
+  // a streaming service you subscribe to and never store video here —
+  // "Play" deep-links out to that service instead.
+  source     TitleSource @default(UPLOAD)
+  providerId String?
+  provider   Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  tmdbId     Int?
+
   genres        TitleGenre[]
   renditions    VideoRendition[]
   watchlistedBy WatchlistEntry[]
   progress      WatchProgress[]
 
+  @@unique([providerId, tmdbId])
   @@index([status])
 }
 

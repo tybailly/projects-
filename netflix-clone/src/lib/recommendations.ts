@@ -17,6 +17,7 @@ export async function getRecommendationsForProfile(profileId: string, limit = 10
   if (engagedGenreIds.size === 0) {
     return prisma.title.findMany({
       where: { status: "READY" },
+      include: { provider: true },
       orderBy: { createdAt: "desc" },
       take: limit
     });
@@ -37,7 +38,7 @@ export async function getRecommendationsForProfile(profileId: string, limit = 10
       id: { notIn: excludeTitleIds },
       genres: { some: { genreId: { in: Array.from(engagedGenreIds) } } }
     },
-    include: { genres: true }
+    include: { genres: true, provider: true }
   });
 
   return candidates
