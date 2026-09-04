@@ -3,7 +3,11 @@
 A full-stack, Netflix-style streaming app: authentication with multiple
 profiles, a browsable catalog with genre rows, real video upload with
 background transcoding into adaptive-bitrate HLS, playback with resume
-support, a watchlist, search, and simple genre-based recommendations.
+support, a watchlist, search, simple genre-based recommendations, and a
+"Streaming Services" section that browses real catalog data (via TMDb) for
+subscription services like Disney+/Paramount+/Peacock/Prime Video — Play on
+those deep-links out to the service itself, since none of them expose an API
+for embedding their DRM-protected video.
 
 This is a personal/portfolio project, not Netflix's actual infrastructure —
 see the root of this repo's conversation history for what is and isn't
@@ -37,8 +41,19 @@ cp .env.example .env      # adjust values if needed
 docker compose up -d      # postgres, redis, minio
 
 npx prisma migrate dev    # creates the schema
-npm run prisma:seed       # demo user + sample catalog (uses public test HLS streams)
+npm run prisma:seed       # demo user + genres
 ```
+
+To populate the "Streaming Services" catalogs, get a free API key at
+https://www.themoviedb.org/ (Settings → API → request a Developer key), add
+it as `TMDB_API_KEY` in `.env`, then run:
+
+```bash
+npm run tmdb:sync
+```
+
+Re-run it any time to refresh the catalog. Edit the `PROVIDERS` list in
+`prisma/sync-tmdb.ts` if you want different services than the default four.
 
 Create the MinIO bucket referenced by `S3_BUCKET` (default `netflix-clone`)
 once, via the MinIO console at http://localhost:9001 (login `minioadmin` /
@@ -76,10 +91,14 @@ register a new one at `/register`.
 ## Project layout
 
 See `prisma/schema.prisma` for the data model, `worker/transcode.ts` for the
-ffmpeg/HLS pipeline, `src/lib/auth.ts` for the auth config, and
-`src/components/VideoPlayer.tsx` for the hls.js playback integration.
+ffmpeg/HLS pipeline, `src/lib/auth.ts` for the auth config,
+`src/components/VideoPlayer.tsx` for the hls.js playback integration, and
+`prisma/sync-tmdb.ts` / `src/lib/providers.ts` for the subscription-service
+catalog and deep-linking.
 
 ## Deliberately out of scope for this MVP
 
 Payments/billing, DRM, multi-region CDN, DASH support, ML-based
 recommendations, native mobile apps, and social features (reviews/ratings).
+Provider deep links go to a search results page, not a direct per-title
+watch URL — none of these services offer that publicly.
