@@ -16,7 +16,7 @@ export async function getRecommendationsForProfile(profileId: string, limit = 10
   const engagedGenreIds = new Set(engaged.flatMap((t) => t.genres.map((g) => g.genreId)));
   if (engagedGenreIds.size === 0) {
     return prisma.title.findMany({
-      where: { status: "READY" },
+      where: { status: "READY", source: { not: "TRAILER" } },
       include: { provider: true },
       orderBy: { createdAt: "desc" },
       take: limit
@@ -35,6 +35,7 @@ export async function getRecommendationsForProfile(profileId: string, limit = 10
   const candidates = await prisma.title.findMany({
     where: {
       status: "READY",
+      source: { not: "TRAILER" },
       id: { notIn: excludeTitleIds },
       genres: { some: { genreId: { in: Array.from(engagedGenreIds) } } }
     },

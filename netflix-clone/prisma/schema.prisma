@@ -28,6 +28,7 @@ enum RenditionStatus {
 enum TitleSource {
   UPLOAD
   PROVIDER
+  TRAILER
 }
 
 model Provider {
@@ -92,11 +93,14 @@ model Title {
   // UPLOAD titles are self-hosted (transcoded by worker/transcode.ts) and
   // play via /watch/[id]. PROVIDER titles are synced from TMDb metadata for
   // a streaming service you subscribe to and never store video here —
-  // "Play" deep-links out to that service instead.
+  // "Play" deep-links out to that service instead. TRAILER titles are
+  // not-yet-released movies; "Play" opens their YouTube trailer inline via
+  // /watch/[id] instead of hls.js or a deep link.
   source     TitleSource @default(UPLOAD)
   providerId String?
   provider   Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
   tmdbId     Int?
+  trailerKey String?
 
   genres        TitleGenre[]
   renditions    VideoRendition[]

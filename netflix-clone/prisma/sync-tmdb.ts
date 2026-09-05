@@ -49,6 +49,10 @@ const PROVIDERS = [
 
 type MediaType = "movie" | "tv";
 
+// How many upcoming movies to check for a trailer; not every one has a
+// YouTube trailer on TMDb yet, so this is an upper bound, not a guarantee.
+const UPCOMING_MOVIES_TO_CHECK = 20;
+
 interface TmdbListItem {
   id: number;
   title?: string;
@@ -59,6 +63,13 @@ interface TmdbListItem {
   release_date?: string;
   first_air_date?: string;
   genre_ids?: number[];
+}
+
+interface TmdbVideo {
+  key: string;
+  site: string;
+  type: string;
+  official: boolean;
 }
 
 async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
@@ -88,6 +99,37 @@ async function fetchTitlesForProvider(mediaType: MediaType, tmdbQueryProviderIds
     results.push(...data.results);
   }
   return results;
+}
+
+async function fetchUpcomingMovies(): Promise<TmdbListItem[]> {
+  const data = await tmdbFetch<{ results: TmdbListItem[] }>("/movie/upcoming", { region: "US", page: "1" });
+  return data.results.slice(0, UPCOMING_MOVIES_TO_CHECK);
+}
+
+/** Picks the best YouTube trailer for a movie, if any: prefer an official
+ * "Trailer" over a "Teaser" or unofficial upload. */
+async function fetchBestTrailerKey(movieId: number): Promise<string | null> {
+  const data = await tmdbFetch<{ results: TmdbVideo[] }>(`/movie/${movieId}/videos`);
+  const youtubeVideos = data.results.filter((v) => v.site === "YouTube");
+  if (youtubeVideos.length === 0) return null;
+
+  const rank = (v: TmdbVideo) => (v.type === "Trailer" ? 2 : v.type === "Teaser" ? 1 : 0) + (v.official ? 0.5 : 0);
+  youtubeVideos.sort((a, b) => rank(b) - rank(a));
+  return youtubeVideos[0].key;
+}
+
+async function tagGenres(titleId: string, genreIds: number[] | undefined, genreMap: Map<number, string>) {
+  for (const genreId of genreIds ?? []) {
+    const genreName = genreMap.get(genreId);
+    if (!genreName) continue;
+
+    const genre = await prisma.genre.upsert({ where: { name: genreName }, update: {}, create: { name: genreName } });
+    await prisma.titleGenre.upsert({
+      where: { titleId_genreId: { titleId, genreId: genre.id } },
+      update: {},
+      create: { titleId, genreId: genre.id }
+    });
+  }
 }
 
 async function main() {
@@ -143,23 +185,7 @@ async function main() {
           }
         });
 
-        for (const genreId of item.genre_ids ?? []) {
-          const genreName = genreMap.get(genreId);
-          if (!genreName) continue;
-
-          const genre = await prisma.genre.upsert({
-            where: { name: genreName },
-            update: {},
-            create: { name: genreName }
-          });
-
-          await prisma.titleGenre.upsert({
-            where: { titleId_genreId: { titleId: title.id, genreId: genre.id } },
-            update: {},
-            create: { titleId: title.id, genreId: genre.id }
-          });
-        }
-
+        await tagGenres(title.id, item.genre_ids, genreMap);
         syncedCount++;
       }
     }
@@ -167,6 +193,52 @@ async function main() {
     console.log(`Synced ${syncedCount} titles for ${provider.name}`);
   }
 
+  const upcomingMovies = await fetchUpcomingMovies();
+  let trailerCount = 0;
+
+  for (const item of upcomingMovies) {
+    const name = item.title;
+    if (!name) continue;
+
+    const trailerKey = await fetchBestTrailerKey(item.id);
+    if (!trailerKey) continue; // skip upcoming movies with no trailer yet
+
+    const dateStr = item.release_date ?? "";
+    const releaseYear = dateStr.slice(0, 4) ? Number(dateStr.slice(0, 4)) : null;
+
+    const existing = await prisma.title.findFirst({ where: { source: "TRAILER", tmdbId: item.id } });
+    const title = existing
+      ? await prisma.title.update({
+          where: { id: existing.id },
+          data: {
+            name,
+            description: item.overview || "No description available.",
+            posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+            backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
+            releaseYear,
+            trailerKey
+          }
+        })
+      : await prisma.title.create({
+          data: {
+            name,
+            description: item.overview || "No description available.",
+            type: "MOVIE",
+            releaseYear,
+            posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+            backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
+            status: "READY",
+            source: "TRAILER",
+            tmdbId: item.id,
+            trailerKey
+          }
+        });
+
+    await tagGenres(title.id, item.genre_ids, genreMaps.movie);
+    trailerCount++;
+  }
+
+  console.log(`Synced ${trailerCount} upcoming trailers`);
   console.log("TMDb sync complete.");
 }
 

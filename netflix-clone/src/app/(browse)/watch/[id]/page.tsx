@@ -5,6 +5,7 @@ import { getActiveProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { resolveMediaUrl } from "@/lib/media";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { TrailerPlayer } from "@/components/TrailerPlayer";
 
 export default async function WatchPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -12,7 +13,18 @@ export default async function WatchPage({ params }: { params: { id: string } }) 
   if (!profile) return null;
 
   const title = await prisma.title.findUnique({ where: { id: params.id } });
-  if (!title || title.status !== "READY" || !title.hlsManifestKey) notFound();
+  if (!title || title.status !== "READY") notFound();
+
+  if (title.source === "TRAILER") {
+    if (!title.trailerKey) notFound();
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-black">
+        <TrailerPlayer titleId={title.id} trailerKey={title.trailerKey} title={title.name} />
+      </div>
+    );
+  }
+
+  if (!title.hlsManifestKey) notFound();
 
   const progress = await prisma.watchProgress.findUnique({
     where: { profileId_titleId: { profileId: profile.id, titleId: title.id } }

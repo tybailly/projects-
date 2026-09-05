@@ -15,14 +15,16 @@ export function buildProviderDeepLink(provider: DeepLinkable, titleName: string)
 interface PlayableTitle {
   id: string;
   name: string;
-  source: "UPLOAD" | "PROVIDER";
+  source: "UPLOAD" | "PROVIDER" | "TRAILER";
   provider: { name: string; searchUrlTemplate: string } | null;
 }
 
 /**
  * Where the "Play" action for a title should go: an UPLOAD title plays in
  * this app's own hls.js player; a PROVIDER title deep-links out to that
- * service, since its video is never hosted here.
+ * service, since its video is never hosted here; a TRAILER title opens its
+ * YouTube trailer inline via /watch/[id] (same route as UPLOAD, which
+ * branches internally on source).
  */
 export function getPlayAction(title: PlayableTitle): { href: string; label: string; external: boolean } {
   if (title.source === "PROVIDER" && title.provider) {
@@ -31,6 +33,9 @@ export function getPlayAction(title: PlayableTitle): { href: string; label: stri
       label: `Open in ${title.provider.name}`,
       external: true
     };
+  }
+  if (title.source === "TRAILER") {
+    return { href: `/watch/${title.id}`, label: "▶ Play Trailer", external: false };
   }
   return { href: `/watch/${title.id}`, label: "▶ Play", external: false };
 }

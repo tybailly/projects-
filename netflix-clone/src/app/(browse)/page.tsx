@@ -13,12 +13,17 @@ export default async function HomePage() {
   const profile = await getActiveProfile(session!.user.id);
   if (!profile) return null; // layout already redirects; satisfies TS
 
-  const [providers, genres, continueWatching, recommendations] = await Promise.all([
+  const [providers, comingSoon, genres, continueWatching, recommendations] = await Promise.all([
     prisma.provider.findMany({ orderBy: { name: "asc" } }),
+    prisma.title.findMany({
+      where: { source: "TRAILER", status: "READY" },
+      orderBy: { releaseYear: "asc" },
+      take: 20
+    }),
     prisma.genre.findMany({
       include: {
         titles: {
-          where: { title: { status: "READY" } },
+          where: { title: { status: "READY", source: { not: "TRAILER" } } },
           include: { title: { include: { provider: true } } },
           take: 20
         }
@@ -76,6 +81,10 @@ export default async function HomePage() {
         <Carousel
           heading="Continue Watching"
           titles={continueWatching.map((w) => ({ id: w.title.id, name: w.title.name, posterUrl: w.title.posterUrl }))}
+        />
+        <Carousel
+          heading="Coming Soon"
+          titles={comingSoon.map((t) => ({ id: t.id, name: t.name, posterUrl: t.posterUrl }))}
         />
         <Carousel
           heading="Because you've watched"
