@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "netflix-clone/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "netflix-clone/**"
+      - ".github/workflows/ci.yml"
+
+defaults:
+  run:
+    working-directory: netflix-clone
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # prisma generate only parses/validates the schema here; it never
+      # opens a connection, so a placeholder URL is enough for CI.
+      DATABASE_URL: "postgresql://user:password@localhost:5432/netflix_clone"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: netflix-clone/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build

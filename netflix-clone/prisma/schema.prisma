@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrations run over a direct (non-pooled) connection — Neon's pooler
+  // runs in PgBouncer transaction mode, which doesn't support the
+  // session-level features (advisory locks, prepared statements) that
+  // `prisma migrate` relies on. Local dev can leave this unset; it falls
+  // back to DATABASE_URL.
+  directUrl = env("DIRECT_URL")
+}
+
+enum TitleType {
+  MOVIE
+  SERIES
+}
+
+enum TitleStatus {
+  PENDING
+  TRANSCODING
+  READY
+  FAILED
+}
+
+enum RenditionStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum TitleSource {
+  UPLOAD
+  PROVIDER
+  TRAILER
+}
+
+model Provider {
+  id                String  @id @default(cuid())
+  name              String  @unique
+  slug              String  @unique
+  tmdbProviderId    Int     @unique
+  brandColor        String
+  // "{query}" is replaced with the URL-encoded title name to build a deep
+  // link out to that service's own search results — there is no public API
+  // that returns a direct per-title watch URL for these services.
+  searchUrlTemplate String
+
+  titles Title[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  isAdmin      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  profiles     Profile[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  avatarUrl String?
+  isKids    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  watchlist       WatchlistEntry[]
+  progress        WatchProgress[]
+  preferredGenres ProfileGenre[]
+
+  @@index([userId])
+}
+
+model Genre {
+  id       String         @id @default(cuid())
+  name     String         @unique
+  titles   TitleGenre[]
+  profiles ProfileGenre[]
+}
+
+// A profile's chosen genre preferences, collected once right after the
+// profile is created, used to populate its "Your Recommendations" row on
+// the home page from titles on your streaming services.
+model ProfileGenre {
+  profileId String
+  genreId   String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  genre     Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, genreId])
+}
+
+model Title {
+  id              String      @id @default(cuid())
+  type            TitleType   @default(MOVIE)
+  name            String
+  description     String
+  releaseYear     Int?
+  // Full release date as TMDb's YYYY-MM-DD string (kept alongside
+  // releaseYear, which stays the source of truth for re-release detection
+  // and sorting) — stored as plain text rather than DateTime since it's
+  // date-only, display-only data and this avoids timezone-shift bugs when
+  // formatting a bare calendar date.
+  releaseDate     String?
+  cast            String? // comma-separated lead actor names
+  director        String? // comma-separated director names
+  maturityRating  String?
+  posterUrl       String?
+  backdropUrl     String?
+  durationSeconds Int?
+  status          TitleStatus @default(PENDING)
+  sourceS3Key     String?
+  hlsManifestKey  String?
+  failureReason   String?
+  createdAt       DateTime    @default(now())
+
+  // UPLOAD titles are self-hosted (transcoded by worker/transcode.ts) and
+  // play via /watch/[id]. PROVIDER titles are synced from TMDb metadata for
+  // a streaming service you subscribe to and never store video here —
+  // "Play" deep-links out to that service instead. TRAILER titles are
+  // not-yet-released movies; "Play" opens their YouTube trailer inline via
+  // /watch/[id] instead of hls.js or a deep link.
+  source     TitleSource @default(UPLOAD)
+  providerId String?
+  provider   Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  tmdbId     Int?
+  trailerKey String?
+
+  genres        TitleGenre[]
+  renditions    VideoRendition[]
+  watchlistedBy WatchlistEntry[]
+  progress      WatchProgress[]
+
+  @@unique([providerId, tmdbId])
+  @@index([status])
+}
+
+model TitleGenre {
+  titleId String
+  genreId String
+  title   Title @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, genreId])
+}
+
+model VideoRendition {
+  id          String          @id @default(cuid())
+  titleId     String
+  title       Title           @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  resolution  String
+  bitrateKbps Int
+  s3Key       String
+  status      RenditionStatus @default(PENDING)
+
+  @@index([titleId])
+}
+
+model WatchlistEntry {
+  id        String   @id @default(cuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titleId   String
+  title     Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+
+  @@unique([profileId, titleId])
+}
+
+model WatchProgress {
+  id              String   @id @default(cuid())
+  profileId       String
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  titleId         String
+  title           Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  positionSeconds Int      @default(0)
+  durationSeconds Int?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([profileId, titleId])
+}
