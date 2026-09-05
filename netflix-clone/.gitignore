@@ -9,3 +9,4 @@ tmp/
 minio-data/
 *.tsbuildinfo
 dump.rdb
+.neon
