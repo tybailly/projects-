@@ -74,6 +74,16 @@ docker compose up   # if not already running in the background
 Register an account at `/register` — you'll need the invite code set as
 `INVITE_CODE` in `.env` (registration is closed entirely if that's unset).
 
+### Making yourself an admin
+
+Admins see an "Admin" tab that can delete any user (and their profiles) or
+any title. There's no signup flag for this — grant it directly in the
+database after registering:
+
+```sql
+UPDATE "User" SET "isAdmin" = true WHERE email = 'you@example.com';
+```
+
 ## Uploading and playing your own video
 
 1. Go to `/admin/upload`, fill in the metadata, and choose a video file.

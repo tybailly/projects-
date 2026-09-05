@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { getActiveProfile } from "@/lib/profile";
+import { isAdminUser } from "@/lib/admin";
 import { ProfileNav } from "@/components/ProfileNav";
 
 export default async function BrowseLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,8 @@ export default async function BrowseLayout({ children }: { children: React.React
 
   const profile = await getActiveProfile(session.user.id);
   if (!profile) redirect("/profiles");
+
+  const isAdmin = await isAdminUser(session.user.id);
 
   return (
     <div className="min-h-screen bg-brand-black">
@@ -32,6 +35,11 @@ export default async function BrowseLayout({ children }: { children: React.React
             <Link href="/search" className="hover:text-white">
               Search
             </Link>
+            {isAdmin && (
+              <Link href="/admin/manage" className="hover:text-white">
+                Admin
+              </Link>
+            )}
           </nav>
         </div>
         <ProfileNav profileName={profile.name} />
