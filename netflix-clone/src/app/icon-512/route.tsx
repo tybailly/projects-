@@ -13,7 +13,7 @@ export async function GET() {
           background: "#141414"
         }}
       >
-        <span style={{ color: "#e50914", fontSize: 320, fontWeight: 800, fontFamily: "sans-serif" }}>N</span>
+        <span style={{ color: "#e50914", fontSize: 320, fontWeight: 800, fontFamily: "sans-serif" }}>M</span>
       </div>
     ),
     { width: 512, height: 512 }

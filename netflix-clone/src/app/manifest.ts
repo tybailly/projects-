@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Streamflix",
-    short_name: "Streamflix",
+    name: "MyFlix",
+    short_name: "MyFlix",
     description: "A full-stack Netflix-style streaming clone.",
     start_url: "/",
     display: "standalone",

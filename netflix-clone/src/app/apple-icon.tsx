@@ -16,7 +16,7 @@ export default function AppleIcon() {
           background: "#141414"
         }}
       >
-        <span style={{ color: "#e50914", fontSize: 110, fontWeight: 800, fontFamily: "sans-serif" }}>N</span>
+        <span style={{ color: "#e50914", fontSize: 110, fontWeight: 800, fontFamily: "sans-serif" }}>M</span>
       </div>
     ),
     { ...size }

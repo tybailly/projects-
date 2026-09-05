@@ -3,10 +3,10 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Streamflix",
+  title: "MyFlix",
   description: "A full-stack Netflix-style streaming clone.",
   appleWebApp: {
-    title: "Streamflix",
+    title: "MyFlix",
     statusBarStyle: "black-translucent"
   }
 };
