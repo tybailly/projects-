@@ -5,6 +5,7 @@ import { getActiveProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { getRecommendationsForProfile } from "@/lib/recommendations";
 import { getPlayAction } from "@/lib/providers";
+import { isRerelease } from "@/lib/trailers";
 import { Carousel } from "@/components/Carousel";
 import { ProviderTile } from "@/components/ProviderTile";
 
@@ -84,7 +85,10 @@ export default async function HomePage() {
         />
         <Carousel
           heading="Coming Soon"
-          titles={comingSoon.map((t) => ({ id: t.id, name: t.name, posterUrl: t.posterUrl }))}
+          headingHref="/coming-soon"
+          titles={comingSoon
+            .filter((t) => !isRerelease(t.releaseYear))
+            .map((t) => ({ id: t.id, name: t.name, posterUrl: t.posterUrl }))}
         />
         <Carousel
           heading="Because you've watched"

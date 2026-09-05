@@ -5,6 +5,7 @@ export interface TitleCardData {
   id: string;
   name: string;
   posterUrl: string | null;
+  badge?: string;
 }
 
 export function TitleCard({ title }: { title: TitleCardData }) {
@@ -22,6 +23,11 @@ export function TitleCard({ title }: { title: TitleCardData }) {
             sizes="200px"
             className="object-cover"
           />
+        )}
+        {title.badge && (
+          <span className="absolute left-1 top-1 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            {title.badge}
+          </span>
         )}
       </div>
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">

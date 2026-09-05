@@ -51,7 +51,8 @@ type MediaType = "movie" | "tv";
 
 // How many upcoming movies to check for a trailer; not every one has a
 // YouTube trailer on TMDb yet, so this is an upper bound, not a guarantee.
-const UPCOMING_MOVIES_TO_CHECK = 20;
+const UPCOMING_MOVIES_TO_CHECK = 40;
+const UPCOMING_PAGES = 2; // 20 results/page
 
 interface TmdbListItem {
   id: number;
@@ -102,8 +103,12 @@ async function fetchTitlesForProvider(mediaType: MediaType, tmdbQueryProviderIds
 }
 
 async function fetchUpcomingMovies(): Promise<TmdbListItem[]> {
-  const data = await tmdbFetch<{ results: TmdbListItem[] }>("/movie/upcoming", { region: "US", page: "1" });
-  return data.results.slice(0, UPCOMING_MOVIES_TO_CHECK);
+  const results: TmdbListItem[] = [];
+  for (let page = 1; page <= UPCOMING_PAGES; page++) {
+    const data = await tmdbFetch<{ results: TmdbListItem[] }>("/movie/upcoming", { region: "US", page: String(page) });
+    results.push(...data.results);
+  }
+  return results.slice(0, UPCOMING_MOVIES_TO_CHECK);
 }
 
 /** Picks the best YouTube trailer for a movie, if any: prefer an official
