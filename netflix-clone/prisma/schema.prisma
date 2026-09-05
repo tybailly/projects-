@@ -62,16 +62,30 @@ model Profile {
   isKids    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  watchlist WatchlistEntry[]
-  progress  WatchProgress[]
+  watchlist       WatchlistEntry[]
+  progress        WatchProgress[]
+  preferredGenres ProfileGenre[]
 
   @@index([userId])
 }
 
 model Genre {
-  id     String       @id @default(cuid())
-  name   String       @unique
-  titles TitleGenre[]
+  id       String         @id @default(cuid())
+  name     String         @unique
+  titles   TitleGenre[]
+  profiles ProfileGenre[]
+}
+
+// A profile's chosen genre preferences, collected once right after the
+// profile is created, used to populate its "Your Recommendations" row on
+// the home page from titles on your streaming services.
+model ProfileGenre {
+  profileId String
+  genreId   String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  genre     Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, genreId])
 }
 
 model Title {

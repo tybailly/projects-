@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getActiveProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
-import { getRecommendationsForProfile } from "@/lib/recommendations";
+import { getRecommendationsForProfile, getPreferredGenreRecommendations } from "@/lib/recommendations";
 import { getPlayAction } from "@/lib/providers";
 import { isRerelease } from "@/lib/trailers";
 import { Carousel } from "@/components/Carousel";
@@ -14,7 +14,7 @@ export default async function HomePage() {
   const profile = await getActiveProfile(session!.user.id);
   if (!profile) return null; // layout already redirects; satisfies TS
 
-  const [providers, comingSoon, genres, recommendations] = await Promise.all([
+  const [providers, comingSoon, genres, recommendations, preferredGenreTitles] = await Promise.all([
     prisma.provider.findMany({ orderBy: { name: "asc" } }),
     prisma.title.findMany({
       where: { source: "TRAILER", status: "READY" },
@@ -30,7 +30,8 @@ export default async function HomePage() {
         }
       }
     }),
-    getRecommendationsForProfile(profile.id)
+    getRecommendationsForProfile(profile.id),
+    getPreferredGenreRecommendations(profile.id)
   ]);
 
   const hero = genres.find((g) => g.titles.length > 0)?.titles[0]?.title;
@@ -73,6 +74,10 @@ export default async function HomePage() {
           </section>
         )}
 
+        <Carousel
+          heading="Your Recommendations"
+          titles={preferredGenreTitles.map((t) => ({ id: t.id, name: t.name, posterUrl: t.posterUrl }))}
+        />
         <Carousel
           heading="Coming Soon"
           headingHref="/coming-soon"

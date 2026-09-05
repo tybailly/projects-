@@ -37,12 +37,12 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim() })
     });
-    setBusy(false);
     if (res.ok) {
-      router.refresh();
-      setCreating(false);
-      setName("");
+      const profile = await res.json();
+      router.push(`/profiles/${profile.id}/genres`);
+      return;
     }
+    setBusy(false);
   }
 
   return (

@@ -51,3 +51,28 @@ export async function getRecommendationsForProfile(profileId: string, limit = 10
     .slice(0, limit)
     .map((entry) => entry.title);
 }
+
+/**
+ * Titles matching the genres a profile explicitly picked right after it was
+ * created (see /profiles/[id]/genres) — distinct from the watch-history-based
+ * getRecommendationsForProfile above. Returns [] for a profile that skipped
+ * genre selection, so the "Your Recommendations" row simply doesn't render.
+ */
+export async function getPreferredGenreRecommendations(profileId: string, limit = 20) {
+  const preferred = await prisma.profileGenre.findMany({
+    where: { profileId },
+    select: { genreId: true }
+  });
+  if (preferred.length === 0) return [];
+
+  return prisma.title.findMany({
+    where: {
+      status: "READY",
+      source: "PROVIDER",
+      genres: { some: { genreId: { in: preferred.map((p) => p.genreId) } } }
+    },
+    include: { provider: true },
+    orderBy: { createdAt: "desc" },
+    take: limit
+  });
+}
