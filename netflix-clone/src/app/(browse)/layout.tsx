@@ -23,14 +23,14 @@ export default async function BrowseLayout({ children }: { children: React.React
             <Link href="/" className="hover:text-white">
               Home
             </Link>
+            <Link href="/family-videos" className="hover:text-white">
+              Family Videos
+            </Link>
             <Link href="/my-list" className="hover:text-white">
               My List
             </Link>
             <Link href="/search" className="hover:text-white">
               Search
-            </Link>
-            <Link href="/admin/upload" className="hover:text-white">
-              Upload
             </Link>
           </nav>
         </div>

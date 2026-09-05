@@ -16,6 +16,7 @@ export const config = {
     "/title/:path*",
     "/watch/:path*",
     "/providers/:path*",
-    "/coming-soon"
+    "/coming-soon",
+    "/family-videos"
   ]
 };

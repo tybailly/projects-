@@ -14,7 +14,7 @@ export default async function HomePage() {
   const profile = await getActiveProfile(session!.user.id);
   if (!profile) return null; // layout already redirects; satisfies TS
 
-  const [providers, comingSoon, genres, continueWatching, recommendations] = await Promise.all([
+  const [providers, comingSoon, genres, recommendations] = await Promise.all([
     prisma.provider.findMany({ orderBy: { name: "asc" } }),
     prisma.title.findMany({
       where: { source: "TRAILER", status: "READY" },
@@ -24,22 +24,16 @@ export default async function HomePage() {
     prisma.genre.findMany({
       include: {
         titles: {
-          where: { title: { status: "READY", source: { not: "TRAILER" } } },
+          where: { title: { status: "READY", source: "PROVIDER" } },
           include: { title: { include: { provider: true } } },
           take: 20
         }
       }
     }),
-    prisma.watchProgress.findMany({
-      where: { profileId: profile.id },
-      include: { title: { include: { provider: true } } },
-      orderBy: { updatedAt: "desc" },
-      take: 20
-    }),
     getRecommendationsForProfile(profile.id)
   ]);
 
-  const hero = continueWatching[0]?.title ?? genres.find((g) => g.titles.length > 0)?.titles[0]?.title;
+  const hero = genres.find((g) => g.titles.length > 0)?.titles[0]?.title;
   const heroPlay = hero ? getPlayAction(hero) : null;
 
   return (
@@ -79,10 +73,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        <Carousel
-          heading="Continue Watching"
-          titles={continueWatching.map((w) => ({ id: w.title.id, name: w.title.name, posterUrl: w.title.posterUrl }))}
-        />
         <Carousel
           heading="Coming Soon"
           headingHref="/coming-soon"
