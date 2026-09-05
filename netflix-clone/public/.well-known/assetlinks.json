@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tylerbailly.myflix",
+      "sha256_cert_fingerprints": [
+        "20:68:21:44:52:07:C9:C4:ED:36:4B:7C:49:5B:3C:76:EA:81:72:73:5F:C3:49:F5:AE:0F:C8:CF:06:39:8B:8B"
+      ]
+    }
+  }
+]
