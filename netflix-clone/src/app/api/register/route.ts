@@ -5,14 +5,25 @@ import { prisma } from "@/lib/prisma";
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
+  inviteCode: z.string()
 });
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid email or password (min 8 characters)." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid email, password (min 8 characters), or invite code." }, { status: 400 });
+  }
+
+  const requiredInviteCode = process.env.INVITE_CODE;
+  if (!requiredInviteCode) {
+    // Fail closed: an unconfigured INVITE_CODE means registration should
+    // never silently be left wide open on a public deployment.
+    return NextResponse.json({ error: "Registration is not open." }, { status: 403 });
+  }
+  if (parsed.data.inviteCode !== requiredInviteCode) {
+    return NextResponse.json({ error: "Invalid invite code." }, { status: 403 });
   }
 
   const email = parsed.data.email.toLowerCase();

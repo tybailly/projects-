@@ -71,8 +71,8 @@ npm run worker      # transcode worker (only needed to process real uploads)
 docker compose up   # if not already running in the background
 ```
 
-Log in with the seeded demo account: `demo@example.com` / `password123`, or
-register a new one at `/register`.
+Register an account at `/register` — you'll need the invite code set as
+`INVITE_CODE` in `.env` (registration is closed entirely if that's unset).
 
 ## Uploading and playing your own video
 
