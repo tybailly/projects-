@@ -55,15 +55,11 @@ npm run tmdb:sync
 Re-run it any time to refresh the catalog. Edit the `PROVIDERS` list in
 `prisma/sync-tmdb.ts` if you want different services than the default four.
 
-Create the MinIO bucket referenced by `S3_BUCKET` (default `netflix-clone`)
-once, via the MinIO console at http://localhost:9001 (login `minioadmin` /
-`minioadmin`), or the `mc` CLI:
-
-```bash
-mc alias set local http://localhost:9000 minioadmin minioadmin
-mc mb local/netflix-clone
-mc anonymous set download local/netflix-clone   # served directly for local dev
-```
+The MinIO bucket referenced by `S3_BUCKET` (default `netflix-clone`) is
+created automatically by the `minio-init` service in `docker-compose.yml`
+the first time you run `docker compose up` — including setting it to allow
+public downloads, which the browser needs to fetch HLS manifests/segments
+and posters directly. No manual `mc` step required.
 
 ## Running
 
