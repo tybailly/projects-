@@ -73,6 +73,13 @@ interface TmdbVideo {
   official: boolean;
 }
 
+interface TmdbCredits {
+  cast: { name: string; order: number }[];
+  crew: { name: string; job: string }[];
+}
+
+const LEAD_CAST_COUNT = 5;
+
 async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${TMDB_BASE}${path}`);
   url.searchParams.set("api_key", TMDB_API_KEY!);
@@ -121,6 +128,23 @@ async function fetchBestTrailerKey(movieId: number): Promise<string | null> {
   const rank = (v: TmdbVideo) => (v.type === "Trailer" ? 2 : v.type === "Teaser" ? 1 : 0) + (v.official ? 0.5 : 0);
   youtubeVideos.sort((a, b) => rank(b) - rank(a));
   return youtubeVideos[0].key;
+}
+
+/** Top billed cast (by TMDb's own ordering) and directors for a movie. */
+async function fetchCredits(movieId: number): Promise<{ cast: string | null; director: string | null }> {
+  const data = await tmdbFetch<TmdbCredits>(`/movie/${movieId}/credits`);
+
+  const cast = [...data.cast]
+    .sort((a, b) => a.order - b.order)
+    .slice(0, LEAD_CAST_COUNT)
+    .map((c) => c.name);
+
+  const directors = data.crew.filter((c) => c.job === "Director").map((c) => c.name);
+
+  return {
+    cast: cast.length > 0 ? cast.join(", ") : null,
+    director: directors.length > 0 ? directors.join(", ") : null
+  };
 }
 
 async function tagGenres(titleId: string, genreIds: number[] | undefined, genreMap: Map<number, string>) {
@@ -210,6 +234,7 @@ async function main() {
 
     const dateStr = item.release_date ?? "";
     const releaseYear = dateStr.slice(0, 4) ? Number(dateStr.slice(0, 4)) : null;
+    const { cast, director } = await fetchCredits(item.id);
 
     const existing = await prisma.title.findFirst({ where: { source: "TRAILER", tmdbId: item.id } });
     const title = existing
@@ -221,6 +246,9 @@ async function main() {
             posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
             backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
             releaseYear,
+            releaseDate: dateStr || null,
+            cast,
+            director,
             trailerKey
           }
         })
@@ -230,6 +258,9 @@ async function main() {
             description: item.overview || "No description available.",
             type: "MOVIE",
             releaseYear,
+            releaseDate: dateStr || null,
+            cast,
+            director,
             posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
             backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
             status: "READY",

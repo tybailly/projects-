@@ -6,6 +6,7 @@ import { getActiveProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { getPlayAction } from "@/lib/providers";
+import { formatReleaseDate } from "@/lib/trailers";
 
 export default async function TitleDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -22,6 +23,8 @@ export default async function TitleDetailPage({ params }: { params: { id: string
     where: { profileId_titleId: { profileId: profile.id, titleId: title.id } }
   });
 
+  const formattedReleaseDate = formatReleaseDate(title.releaseDate);
+
   return (
     <div>
       <div
@@ -32,7 +35,7 @@ export default async function TitleDetailPage({ params }: { params: { id: string
         <div className="relative z-10 px-6 pb-10 sm:px-12">
           <h1 className="mb-2 text-4xl font-bold text-white">{title.name}</h1>
           <div className="mb-4 flex gap-3 text-sm text-neutral-300">
-            {title.releaseYear && <span>{title.releaseYear}</span>}
+            {formattedReleaseDate ? <span>{formattedReleaseDate}</span> : title.releaseYear && <span>{title.releaseYear}</span>}
             {title.maturityRating && <span className="rounded border border-neutral-500 px-1.5">{title.maturityRating}</span>}
             {title.durationSeconds && <span>{Math.round(title.durationSeconds / 60)} min</span>}
           </div>
@@ -70,9 +73,11 @@ export default async function TitleDetailPage({ params }: { params: { id: string
 
         <p className="mt-6 max-w-2xl text-neutral-200">{title.description}</p>
 
-        <p className="mt-4 text-sm text-neutral-400">
-          Genres: {title.genres.map((g) => g.genre.name).join(", ") || "—"}
-        </p>
+        <div className="mt-4 space-y-1 text-sm text-neutral-400">
+          <p>Genres: {title.genres.map((g) => g.genre.name).join(", ") || "—"}</p>
+          {title.director && <p>Director: {title.director}</p>}
+          {title.cast && <p>Starring: {title.cast}</p>}
+        </div>
       </div>
     </div>
   );

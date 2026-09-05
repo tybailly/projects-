@@ -80,6 +80,14 @@ model Title {
   name            String
   description     String
   releaseYear     Int?
+  // Full release date as TMDb's YYYY-MM-DD string (kept alongside
+  // releaseYear, which stays the source of truth for re-release detection
+  // and sorting) — stored as plain text rather than DateTime since it's
+  // date-only, display-only data and this avoids timezone-shift bugs when
+  // formatting a bare calendar date.
+  releaseDate     String?
+  cast            String? // comma-separated lead actor names
+  director        String? // comma-separated director names
   maturityRating  String?
   posterUrl       String?
   backdropUrl     String?
