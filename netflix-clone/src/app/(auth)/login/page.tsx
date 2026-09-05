@@ -65,7 +65,6 @@ export default function LoginPage() {
             Create an account
           </Link>
         </p>
-        <p className="mt-4 text-xs text-neutral-500">Demo account: demo@example.com / password123</p>
       </form>
     </main>
   );

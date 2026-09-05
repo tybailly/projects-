@@ -30,6 +30,7 @@ export default function RegisterPage() {
       return;
     }
 
+    const { profileId } = await res.json();
     const result = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
 
@@ -37,7 +38,7 @@ export default function RegisterPage() {
       setError("Account created, but sign-in failed. Try logging in.");
       return;
     }
-    router.push("/profiles");
+    router.push(`/profiles/${profileId}/genres`);
     router.refresh();
   }
 
