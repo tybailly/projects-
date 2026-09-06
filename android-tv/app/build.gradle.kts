@@ -66,6 +66,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.material3:material3")
 
     // Compose for TV: D-pad-focus-aware components (rows, cards) built for
     // the 10-foot UI, distinct from the phone/tablet Material components.
