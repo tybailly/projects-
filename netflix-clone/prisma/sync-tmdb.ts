@@ -12,13 +12,16 @@ const PAGES_PER_PROVIDER = 2; // ~40 titles per media type per provider
 // actually queried against — some services (Paramount+) split their catalog
 // across multiple provider IDs by subscription tier in TMDb's data, so we
 // OR them together to get the full catalog regardless of tier.
-// Disney+, Paramount+, and Peacock all require an authenticated session
-// just to search or browse — hitting their bare /search?q= URL while
-// logged out returns a "not found"/marketing redirect, not real results.
-// A Google search scoped to that service's domain sidesteps the login wall
-// entirely and reliably surfaces the actual title's page as a top result,
-// which is the closest we can get the user without a real per-title deep
-// link (see buildProviderDeepLink in src/lib/providers.ts).
+// searchUrlTemplate points at each service's own domain rather than a
+// generic search engine specifically so Android's App Links hand this off
+// to the real, already-logged-in streaming app installed on the TV instead
+// of opening a browser -- that only works when the link's host matches a
+// domain the app has verified. An anonymous web visitor hitting these same
+// URLs cold (no app installed, not logged in) may see a login wall instead
+// of real search results; that's an acceptable tradeoff since the primary
+// client is the TV app, not the browser. There's still no real per-title
+// deep link these services expose publicly (see buildProviderDeepLink in
+// src/lib/providers.ts).
 const PROVIDERS = [
   {
     name: "Disney+",
@@ -26,7 +29,7 @@ const PROVIDERS = [
     tmdbProviderId: 337,
     tmdbQueryProviderIds: [337],
     brandColor: "#113CCF",
-    searchUrlTemplate: "https://www.google.com/search?q={query}+site:disneyplus.com"
+    searchUrlTemplate: "https://www.disneyplus.com/search?q={query}"
   },
   {
     name: "Paramount+",
@@ -34,7 +37,7 @@ const PROVIDERS = [
     tmdbProviderId: 2303, // "Paramount Plus Premium" — canonical id for this provider row
     tmdbQueryProviderIds: [2303, 2616], // Premium + Essential tiers combined
     brandColor: "#0064FF",
-    searchUrlTemplate: "https://www.google.com/search?q={query}+site:paramountplus.com"
+    searchUrlTemplate: "https://www.paramountplus.com/search/{query}/"
   },
   {
     name: "Peacock",
@@ -42,7 +45,7 @@ const PROVIDERS = [
     tmdbProviderId: 387,
     tmdbQueryProviderIds: [387],
     brandColor: "#000000",
-    searchUrlTemplate: "https://www.google.com/search?q={query}+site:peacocktv.com"
+    searchUrlTemplate: "https://www.peacocktv.com/search?q={query}"
   },
   {
     name: "Prime Video",
@@ -50,7 +53,7 @@ const PROVIDERS = [
     tmdbProviderId: 9,
     tmdbQueryProviderIds: [9],
     brandColor: "#00A8E1",
-    searchUrlTemplate: "https://www.google.com/search?q={query}+site:amazon.com+Prime+Video"
+    searchUrlTemplate: "https://www.primevideo.com/search/?phrase={query}"
   }
 ] as const;
 
