@@ -79,6 +79,7 @@ data class TitleDetail(
     val status: String,
     val source: String,
     val provider: Provider?,
+    val trailerKey: String?,
     val genreNames: List<String>,
     val inWatchlist: Boolean,
     val play: PlayAction?

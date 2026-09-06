@@ -8,13 +8,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.tylerbailly.myflix.ui.home.PlaceholderHomeScreen
+import com.tylerbailly.myflix.ui.home.HomeScreen
+import com.tylerbailly.myflix.ui.home.ProviderScreen
 import com.tylerbailly.myflix.ui.login.LoginScreen
 import com.tylerbailly.myflix.ui.login.RegisterScreen
+import com.tylerbailly.myflix.ui.player.PlayerScreen
 import com.tylerbailly.myflix.ui.profile.CreateProfileScreen
 import com.tylerbailly.myflix.ui.profile.GenrePickerScreen
 import com.tylerbailly.myflix.ui.profile.ProfilePickerScreen
 import com.tylerbailly.myflix.ui.theme.MyFlixTheme
+import com.tylerbailly.myflix.ui.title.TitleDetailScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,7 +80,37 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("home") {
-                        PlaceholderHomeScreen()
+                        HomeScreen(
+                            onTitleClick = { id -> navController.navigate("title/$id") },
+                            onProviderClick = { slug -> navController.navigate("provider/$slug") }
+                        )
+                    }
+                    composable(
+                        "title/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                        TitleDetailScreen(
+                            titleId = id,
+                            onPlayUpload = { titleId -> navController.navigate("player/$titleId") }
+                        )
+                    }
+                    composable(
+                        "player/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                        PlayerScreen(titleId = id)
+                    }
+                    composable(
+                        "provider/{slug}",
+                        arguments = listOf(navArgument("slug") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
+                        ProviderScreen(
+                            slug = slug,
+                            onTitleClick = { id -> navController.navigate("title/$id") }
+                        )
                     }
                 }
             }
