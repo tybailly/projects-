@@ -16,6 +16,7 @@ import com.tylerbailly.myflix.ui.player.PlayerScreen
 import com.tylerbailly.myflix.ui.profile.CreateProfileScreen
 import com.tylerbailly.myflix.ui.profile.GenrePickerScreen
 import com.tylerbailly.myflix.ui.profile.ProfilePickerScreen
+import com.tylerbailly.myflix.ui.splash.SplashScreen
 import com.tylerbailly.myflix.ui.theme.MyFlixTheme
 import com.tylerbailly.myflix.ui.title.TitleDetailScreen
 
@@ -25,7 +26,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyFlixTheme {
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "login") {
+                NavHost(navController = navController, startDestination = "splash") {
+                    composable("splash") {
+                        SplashScreen(
+                            onLoggedIn = {
+                                navController.navigate("profiles") {
+                                    popUpTo("splash") { inclusive = true }
+                                }
+                            },
+                            onLoggedOut = {
+                                navController.navigate("login") {
+                                    popUpTo("splash") { inclusive = true }
+                                }
+                            }
+                        )
+                    }
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {
