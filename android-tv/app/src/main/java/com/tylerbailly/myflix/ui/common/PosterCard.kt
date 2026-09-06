@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -38,14 +39,14 @@ fun PosterCard(
 
     Column(
         modifier = Modifier
-            .width(140.dp)
-            .padding(6.dp)
+            .width(220.dp)
+            .padding(8.dp)
     ) {
         Box(
             modifier = Modifier
-                .width(140.dp)
-                .height(200.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .width(220.dp)
+                .height(320.dp)
+                .clip(RoundedCornerShape(6.dp))
                 .background(SurfaceDark)
                 .border(
                     width = if (isFocused) 3.dp else 0.dp,
@@ -58,7 +59,8 @@ fun PosterCard(
                 AsyncImage(
                     model = posterUrl,
                     contentDescription = name,
-                    modifier = Modifier.height(200.dp).width(140.dp)
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 Text(

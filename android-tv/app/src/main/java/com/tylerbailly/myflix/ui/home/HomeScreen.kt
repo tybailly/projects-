@@ -81,7 +81,7 @@ fun HomeScreen(
 
 @Composable
 private fun HomeContent(name: String?, description: String?, backdropUrl: String?) {
-    Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
         if (backdropUrl != null) {
             AsyncImage(
                 model = backdropUrl,
@@ -90,16 +90,16 @@ private fun HomeContent(name: String?, description: String?, backdropUrl: String
                 modifier = Modifier.fillMaxSize()
             )
         }
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             if (name != null) {
-                Text(name, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground)
+                Text(name, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
             }
             if (description != null) {
                 Text(
                     description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 2
+                    maxLines = 1
                 )
             }
         }
