@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.MyFlix" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorBackground">#141414</item>
+        <item name="android:navigationBarColor">#141414</item>
+        <item name="android:statusBarColor">#141414</item>
+    </style>
+</resources>
