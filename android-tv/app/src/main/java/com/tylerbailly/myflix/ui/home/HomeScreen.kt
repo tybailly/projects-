@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import com.tylerbailly.myflix.network.Title
 import com.tylerbailly.myflix.ui.common.PosterCard
 import com.tylerbailly.myflix.ui.common.TopNavBar
 import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 import com.tylerbailly.myflix.ui.theme.SurfaceDark
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -63,24 +65,28 @@ fun HomeScreen(
         } else if (data == null) {
             Text("Loading...", color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(24.dp))
         } else {
-            HomeContent(data.hero?.name, data.hero?.description, data.hero?.backdropUrl)
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item { HomeContent(data.hero?.name, data.hero?.description, data.hero?.backdropUrl) }
 
-            if (data.providers.isNotEmpty()) {
-                TitleRow("Streaming Services") {
-                    items(data.providers) { provider -> ProviderTile(provider, onClick = { onProviderClick(provider.slug) }) }
+                if (data.providers.isNotEmpty()) {
+                    item {
+                        TitleRow("Streaming Services") {
+                            items(data.providers) { provider -> ProviderTile(provider, onClick = { onProviderClick(provider.slug) }) }
+                        }
+                    }
                 }
-            }
-            if (data.preferredGenreTitles.isNotEmpty()) {
-                PosterRow("Your Recommendations", data.preferredGenreTitles, onTitleClick)
-            }
-            if (data.comingSoon.isNotEmpty()) {
-                PosterRow("Coming Soon", data.comingSoon, onTitleClick)
-            }
-            if (data.recommendations.isNotEmpty()) {
-                PosterRow("Because you've watched", data.recommendations, onTitleClick)
-            }
-            data.genres.forEach { genre ->
-                PosterRow(genre.name, genre.titles, onTitleClick)
+                if (data.preferredGenreTitles.isNotEmpty()) {
+                    item { PosterRow("Your Recommendations", data.preferredGenreTitles, onTitleClick) }
+                }
+                if (data.comingSoon.isNotEmpty()) {
+                    item { PosterRow("Coming Soon", data.comingSoon, onTitleClick) }
+                }
+                if (data.recommendations.isNotEmpty()) {
+                    item { PosterRow("Because you've watched", data.recommendations, onTitleClick) }
+                }
+                items(data.genres) { genre ->
+                    PosterRow(genre.name, genre.titles, onTitleClick)
+                }
             }
         }
     }
@@ -145,7 +151,7 @@ private fun ProviderTile(provider: Provider, onClick: () -> Unit) {
             .padding(6.dp)
             .height(80.dp)
             .background(SurfaceDark)
-            .border(width = if (isFocused) 3.dp else 0.dp, color = BrandRed)
+            .border(width = if (isFocused) 3.dp else 0.dp, color = FocusColor)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 20.dp),
     ) {

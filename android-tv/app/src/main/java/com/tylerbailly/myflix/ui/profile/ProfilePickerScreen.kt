@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tylerbailly.myflix.network.Profile
 import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 import com.tylerbailly.myflix.ui.theme.SurfaceDark
 
 @Composable
@@ -73,7 +74,7 @@ private fun ProfileTile(label: String, glyph: String, onClick: () -> Unit) {
             modifier = Modifier
                 .size(120.dp)
                 .background(SurfaceDark)
-                .border(width = if (isFocused) 3.dp else 0.dp, color = BrandRed)
+                .border(width = if (isFocused) 3.dp else 0.dp, color = FocusColor)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
             contentAlignment = Alignment.Center
         ) {

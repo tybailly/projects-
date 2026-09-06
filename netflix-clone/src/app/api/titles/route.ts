@@ -7,13 +7,20 @@ export async function GET(request: Request) {
 
   if (!q) return NextResponse.json([]);
 
+  // Match each word separately rather than the whole phrase as one substring,
+  // so e.g. "Spider Man" still finds "Spider-Man" instead of requiring the
+  // user to type the title's exact punctuation.
+  const words = q.split(/\s+/).filter(Boolean);
+
   const titles = await prisma.title.findMany({
     where: {
       status: "READY",
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } }
-      ]
+      AND: words.map((word) => ({
+        OR: [
+          { name: { contains: word, mode: "insensitive" as const } },
+          { description: { contains: word, mode: "insensitive" as const } }
+        ]
+      }))
     },
     take: 30,
     orderBy: { name: "asc" }
