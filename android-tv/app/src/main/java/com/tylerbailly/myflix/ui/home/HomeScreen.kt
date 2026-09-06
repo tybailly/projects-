@@ -30,6 +30,7 @@ import com.tylerbailly.myflix.network.GenreRow
 import com.tylerbailly.myflix.network.Provider
 import com.tylerbailly.myflix.network.Title
 import com.tylerbailly.myflix.ui.common.PosterCard
+import com.tylerbailly.myflix.ui.common.TopNavBar
 import com.tylerbailly.myflix.ui.theme.BrandRed
 import com.tylerbailly.myflix.ui.theme.SurfaceDark
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +39,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun HomeScreen(
     onTitleClick: (String) -> Unit,
     onProviderClick: (String) -> Unit,
+    onFamilyVideos: () -> Unit,
+    onMyList: () -> Unit,
+    onSearch: () -> Unit,
+    onComingSoon: () -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     val home by viewModel.home.collectAsState()
@@ -50,6 +55,8 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        TopNavBar(onHome = {}, onFamilyVideos = onFamilyVideos, onMyList = onMyList, onSearch = onSearch, onComingSoon = onComingSoon)
+
         val data = home
         if (error != null) {
             Text(error!!, color = BrandRed, modifier = Modifier.padding(24.dp))
