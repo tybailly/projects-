@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 import com.tylerbailly.myflix.ui.theme.SurfaceDark
 
 /** A focusable poster tile used in every horizontally-scrolling row. */
@@ -50,7 +51,7 @@ fun PosterCard(
                 .background(SurfaceDark)
                 .border(
                     width = if (isFocused) 3.dp else 0.dp,
-                    color = BrandRed,
+                    color = FocusColor,
                     shape = RoundedCornerShape(4.dp)
                 )
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)

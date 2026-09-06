@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -61,23 +62,27 @@ fun ProviderScreen(slug: String, onTitleClick: (String) -> Unit, viewModel: Prov
         } else if (d == null) {
             Text("Loading...", color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(24.dp))
         } else {
-            Text(
-                d.provider.name,
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(24.dp)
-            )
-            d.genres.forEach { genre ->
-                Column {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
                     Text(
-                        genre.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        d.provider.name,
+                        style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(24.dp)
                     )
-                    LazyRow(contentPadding = PaddingValues(horizontal = 18.dp)) {
-                        items(genre.titles) { title ->
-                            PosterCard(name = title.name, posterUrl = title.posterUrl, onClick = { onTitleClick(title.id) })
+                }
+                items(d.genres) { genre ->
+                    Column {
+                        Text(
+                            genre.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                        )
+                        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp)) {
+                            items(genre.titles) { title ->
+                                PosterCard(name = title.name, posterUrl = title.posterUrl, onClick = { onTitleClick(title.id) })
+                            }
                         }
                     }
                 }

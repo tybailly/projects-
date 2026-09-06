@@ -1,6 +1,8 @@
 package com.tylerbailly.myflix.ui.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +18,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -66,6 +73,19 @@ fun SearchScreen(
 
     LaunchedEffect(query) { viewModel.search(query) }
 
+    val focusRequester = remember { FocusRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFieldFocused by interactionSource.collectIsFocusedAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // A D-pad "select" only gives the field logical focus; unlike a touch
+    // tap it doesn't pop the on-screen keyboard, so we have to show it
+    // ourselves once focus lands here.
+    LaunchedEffect(isFieldFocused) {
+        if (isFieldFocused) keyboardController?.show()
+    }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,7 +98,12 @@ fun SearchScreen(
             onValueChange = { query = it },
             label = { Text("Search titles") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+            interactionSource = interactionSource,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .focusRequester(focusRequester)
         )
 
         if (results.isEmpty() && query.isNotBlank()) {

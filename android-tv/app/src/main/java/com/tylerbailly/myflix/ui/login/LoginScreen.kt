@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 
 @Composable
 fun LoginScreen(
@@ -113,7 +114,7 @@ fun TvTextField(
             .fillMaxWidth()
             .border(
                 width = if (isFocused) 3.dp else 0.dp,
-                color = if (isFocused) BrandRed else MaterialTheme.colorScheme.background
+                color = if (isFocused) FocusColor else MaterialTheme.colorScheme.background
             )
     )
 }

@@ -15,7 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 
 /** A simple top-level nav row, matching the web app's Home / Family Videos / My List / Search bar. */
 @Composable
@@ -45,9 +45,9 @@ private fun NavItem(label: String, onClick: () -> Unit) {
 
     Text(
         label,
-        color = if (isFocused) BrandRed else MaterialTheme.colorScheme.onBackground,
+        color = if (isFocused) FocusColor else MaterialTheme.colorScheme.onBackground,
         modifier = Modifier
-            .border(width = if (isFocused) 1.dp else 0.dp, color = BrandRed)
+            .border(width = if (isFocused) 1.dp else 0.dp, color = FocusColor)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(4.dp)
     )
