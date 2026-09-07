@@ -13,12 +13,11 @@ data class PlayAction(
     val external: Boolean
 )
 
-data class HeroTitle(
+data class NewRelease(
     val id: String,
     val name: String,
-    val description: String?,
     val backdropUrl: String?,
-    val play: PlayAction
+    val providerName: String?
 )
 
 data class Provider(
@@ -35,7 +34,7 @@ data class GenreRow(
 )
 
 data class HomeResponse(
-    val hero: HeroTitle?,
+    val newReleases: List<NewRelease>,
     val providers: List<Provider>,
     val comingSoon: List<Title>,
     val preferredGenreTitles: List<Title>,

@@ -1,5 +1,6 @@
 package com.tylerbailly.myflix.ui.home
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,25 +10,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.tylerbailly.myflix.network.GenreRow
+import com.tylerbailly.myflix.network.NewRelease
 import com.tylerbailly.myflix.network.Provider
 import com.tylerbailly.myflix.network.Title
 import com.tylerbailly.myflix.ui.common.PosterCard
@@ -36,6 +44,7 @@ import com.tylerbailly.myflix.ui.theme.BrandRed
 import com.tylerbailly.myflix.ui.theme.FocusColor
 import com.tylerbailly.myflix.ui.theme.SurfaceDark
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -66,7 +75,9 @@ fun HomeScreen(
             Text("Loading...", color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(24.dp))
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                item { HomeContent(data.hero?.name, data.hero?.description, data.hero?.backdropUrl) }
+                if (data.newReleases.isNotEmpty()) {
+                    item { NewReleasesCarousel(data.newReleases, onTitleClick) }
+                }
 
                 if (data.providers.isNotEmpty()) {
                     item {
@@ -92,28 +103,64 @@ fun HomeScreen(
     }
 }
 
+/** An auto-advancing banner cycling through the newest titles synced from subscribed providers. */
 @Composable
-private fun HomeContent(name: String?, description: String?, backdropUrl: String?) {
-    Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
-        if (backdropUrl != null) {
-            AsyncImage(
-                model = backdropUrl,
-                contentDescription = name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+private fun NewReleasesCarousel(releases: List<NewRelease>, onTitleClick: (String) -> Unit) {
+    var index by remember(releases) { mutableIntStateOf(0) }
+
+    LaunchedEffect(releases) {
+        while (true) {
+            delay(6000)
+            index = (index + 1) % releases.size
         }
-        Column(modifier = Modifier.padding(16.dp)) {
-            if (name != null) {
-                Text(name, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
+    }
+
+    val current = releases[index]
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .border(width = if (isFocused) 3.dp else 0.dp, color = FocusColor)
+            .clickable(interactionSource = interactionSource, indication = null) { onTitleClick(current.id) }
+    ) {
+        Crossfade(targetState = current, label = "newReleaseBackdrop") { release ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (release.backdropUrl != null) {
+                    AsyncImage(
+                        model = release.backdropUrl,
+                        contentDescription = release.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
+                    if (release.providerName != null) {
+                        Text(
+                            "NEW ON ${release.providerName.uppercase()}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BrandRed
+                        )
+                    }
+                    Text(release.name, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
+                }
             }
-            if (description != null) {
-                Text(
-                    description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1
-                )
+        }
+        if (releases.size > 1) {
+            Row(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                releases.indices.forEach { i ->
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(if (i == index) BrandRed else SurfaceDark)
+                    )
+                }
             }
         }
     }

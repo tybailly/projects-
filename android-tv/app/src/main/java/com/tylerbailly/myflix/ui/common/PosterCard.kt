@@ -83,5 +83,18 @@ fun PosterCard(
                 }
             }
         }
+        // Poster art frequently has no title baked in (a plain still or
+        // promotional photo rather than key art), so the name is always
+        // shown here rather than relying on the image itself.
+        if (posterUrl != null) {
+            Text(
+                name,
+                modifier = Modifier.padding(top = 6.dp),
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
