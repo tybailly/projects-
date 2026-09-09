@@ -101,7 +101,11 @@ driving — are all things UE5 ships strong first-party or free tooling for:
 ### M1 — Core locomotion & interaction (1-2 weeks)
 - Player character: MetaHuman + generic patrol uniform (avoid real NYPD
   trademarks).
-- Enhanced Input setup, third-person camera tuning.
+- Enhanced Input setup, third-person camera tuning. Default camera is a
+  standard third-person follow cam; no first-person mode planned — the
+  shootout in M4 tightens to an over-the-shoulder aim camera instead of
+  switching perspective (cheaper than a separate first-person arm/weapon
+  rig, and keeps one camera paradigm throughout).
 - Interaction system: interface-based `Interactable` (line trace from
   camera, context prompt UI) — this is the hook every incident later plugs
   into, so build it generically now.
@@ -122,53 +126,82 @@ driving — are all things UE5 ships strong first-party or free tooling for:
     resolution outcomes.
   - Simple branching dialogue widget (UMG) driven by a data table — no need
     for a full dialogue plugin at this scope.
-- Ship incident #1 (e.g. jaywalker or noise complaint) end-to-end.
+- Ship incident #1 (parking dispute, see Incidents above) end-to-end.
 
-### M4 — Driving (1-2 weeks)
+### M4 — Combat system (2-3 weeks)
+New milestone, added once incident #2 was scoped as a reactive shootout
+rather than another dialogue-only incident. Kept deliberately minimal: one
+scripted antagonist, one encounter, no reload/ammo economy, no cover system.
+
+- Player: holstered sidearm, draw/holster animation, OTS aim-camera
+  transition (tightened FOV, no perspective switch — see M1), hitscan fire
+  trace, basic recoil/camera kick.
+- Antagonist: state machine (Idle/Dialogue → Threat-Reveal → Attack →
+  Down), telegraphed draw animation (~0.5-1s wind-up so the player has a
+  fair reaction window), hitscan or simple projectile attack, 2-3 hit
+  health with a canned death animation (no ragdoll needed).
+- Player damage feedback: screen-flash/vignette on hit; no HUD health bar
+  needed at this scope.
+- Checkpoint/retry: on player "death" (recommend: 3 hits), reset to just
+  before the reveal beat rather than a full level reload or hard game-over
+  screen — keeps demo pacing tight.
+- This milestone is reusable groundwork, but is authored and tuned against
+  incident #2's specific encounter (M6), not built as a generic system in
+  isolation.
+
+### M5 — Driving (1-2 weeks)
 - Chaos Vehicle patrol car (reuse City Sample's if adopted).
 - Enter/exit vehicle state machine, camera swap.
 - Radio call barks patrol car → incident #2 location as the transition beat.
 - Traffic AI: reuse Mass AI if available; otherwise cut to empty/static
   parked cars for the demo rather than hand-building traffic AI.
 
-### M5 — Flow wiring & incident #2 (1-2 weeks)
+### M6 — Flow wiring & incident #2 (1-2 weeks)
 - Game mode / state machine: intro → incident 1 → drive → incident 2 → end
   card. This is the backbone that turns separate systems into one slice.
-- Second incident authored on top of the M3 framework (should be
-  significantly faster than the first).
+- Author incident #2 (armed subject call, see Incidents above) on top of
+  the M3 dialogue framework and the M4 combat system.
 - End card / credits.
 
-### M6 — Polish & packaging (1-2 weeks)
+### M7 — Polish & packaging (1-2 weeks)
 - Bug pass, profiling (target: stable 60fps at demo settings on a mid-range
   GPU).
 - Packaged Windows build.
 - Capture a gameplay trailer.
 
-**Rough total: 10-14 weeks solo/part-time**, materially shorter if City
-Sample's crowd/traffic/vehicle systems are adopted rather than rebuilt.
+**Rough total: 12-17 weeks solo/part-time** (up from 10-14 weeks — the
+combat system in M4 is the added cost of the shootout climax), materially
+shorter on M0-M3/M5 if City Sample's crowd/traffic/vehicle systems are
+adopted rather than rebuilt.
 
 ## Code split
 
 - **C++**: player character base, vehicle base, `Interactable` interface,
-  incident manager / game mode state machine, save/objective state —
-  anything that's structural or perf-sensitive.
+  weapon/combatant base classes, incident manager / game mode state
+  machine, save/objective state — anything that's structural or
+  perf-sensitive.
 - **Blueprint**: per-level scripting, UMG widgets, individual incident
-  instances built on the C++ incident base, animation blueprints, cosmetic
+  instances built on the C++ incident base, the incident #2 antagonist
+  instance built on the C++ combatant base, animation blueprints, cosmetic
   VFX.
 
 ## Scope cuts if time-constrained
 
-In priority order, cut from the bottom first:
+In priority order, cut from the bottom first. Incident #2 itself is no
+longer a cut candidate now that it's the demo's climax — if M4/M6 run long,
+cut the checkpoint/retry loop instead (make the shootout a single
+unmissable scripted beat that always resolves in the player's favor) before
+cutting the shootout altogether.
+
 1. Traffic AI (parked/static cars are fine)
-2. Second incident (ship a one-incident slice)
-3. Full crowd AI (a handful of scripted/canned pedestrians instead of a
+2. Full crowd AI (a handful of scripted/canned pedestrians instead of a
    living crowd system)
-4. MetaHuman player (use a marketplace/City Sample stand-in character)
+3. MetaHuman player (use a marketplace/City Sample stand-in character)
+4. Combat retry/checkpoint loop (single unmissable scripted beat instead)
 
 ## Open decisions
 
 - City Sample as base vs. blank template — recommend a 1-2 day spike
   loading City Sample and confirming it runs acceptably on your hardware
   before committing.
-- Incident tone/content (what the two incidents actually are).
 - Target platform beyond PC (this plan assumes PC only).
