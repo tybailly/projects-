@@ -201,7 +201,9 @@ cutting the shootout altogether.
 
 ## Open decisions
 
-- City Sample as base vs. blank template — recommend a 1-2 day spike
-  loading City Sample and confirming it runs acceptably on your hardware
-  before committing.
+- ~~City Sample as base vs. blank template~~ — resolved. Dev hardware
+  (Windows 11, RTX 5070 8GB VRAM, 32GB RAM, Core Ultra 9 275HX) clears
+  Epic's recommended spec for City Sample with margin. Adopt City Sample as
+  the M0 base; the install/first-load in M0 is now a sanity check rather
+  than a real go/no-go gate.
 - Target platform beyond PC (this plan assumes PC only).
