@@ -9,8 +9,60 @@ and street layout.
 
 Third-person patrol game. Player is a beat cop working a few blocks of a
 dense, NYC-style street. Loop: walk the block → resolve a minor pedestrian
-incident → get in the patrol car → drive a few blocks → resolve a second
-incident → end of slice. One continuous scene, no loading screens.
+incident → get in the patrol car → drive a few blocks → respond to an armed
+subject call that escalates into a reactive shootout → end of slice. One
+continuous scene, no loading screens. The arc is deliberately calm-to-chaos:
+a mundane dialogue-only incident first, then a dramatic, mechanically
+distinct climax.
+
+## Incidents
+
+### Incident 1 — Parking dispute (foot, M3)
+
+Opens the slice. A delivery truck is double-parked across a bus stop; a
+shop owner flags the player down, annoyed. Pure dialogue + interact, no
+combat — this is the calm beat that teaches the systems.
+
+- Branching resolution: ticket the driver / give a warning / have the
+  driver move along. Each is a simple state change (no mechanical
+  difference beyond dialogue/flavor and an outcome line) — the framework in
+  M3 (`UIncidentDefinition`, data-table dialogue) covers this fully.
+- No new systems required beyond what M1/M3 already scope.
+
+### Incident 2 — Armed subject call (post-drive, M6)
+
+The slice's climax. Dispatch sends the player to a "10-32, man with a gun"
+call a few blocks away — the reason the drive exists narratively, not just
+mechanically.
+
+Sequence:
+1. Radio call fires after incident 1 resolves; player drives to the
+   location (M5).
+2. Arrive, exit vehicle, approach a subject standing near an alley/parked
+   car. Branching dialogue (same system as incident 1) — player can ask the
+   subject to show their hands, ask what's going on, try to de-escalate.
+   For scope, these choices color the dialogue/tension but do **not**
+   prevent the reveal below — this is a scripted "sudden threat" beat, not
+   a preventable one, since it's the demo's one combat set piece.
+3. Scripted reveal: subject reaches to their waistband and draws a handgun,
+   with a telegraphed wind-up (~0.5-1s raise) so the player gets a fair
+   reaction window rather than an instant/unfair death.
+4. Control shifts from dialogue/interact mode into a reactive draw-and-fire
+   beat: player draws their holstered sidearm and fires. 2-3 shot exchange
+   at most.
+5. Subject goes down after taking a hit (simple hit-reaction, no ragdoll
+   physics needed for scope — a canned death animation is fine). If the
+   player is hit, a screen-flash/vignette is sufficient feedback; getting
+   hit enough times (recommend: 3) resets to just before the reveal (a
+   checkpoint retry) rather than a hard game-over/level-reload, to keep
+   demo pacing tight.
+6. Aftermath line ("shots fired, suspect down, requesting a bus") →
+   transition to end card.
+
+This is a **single scripted antagonist, single dramatic beat** — not a
+multi-enemy firefight. That scope is what keeps this achievable inside the
+vertical-slice timeline; see the new M4 milestone below for the systems it
+requires.
 
 ## Engine decision: Unreal Engine 5
 
