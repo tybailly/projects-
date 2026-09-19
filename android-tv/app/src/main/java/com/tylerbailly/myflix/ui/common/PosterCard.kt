@@ -33,6 +33,7 @@ fun PosterCard(
     name: String,
     posterUrl: String?,
     badge: String? = null,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -44,7 +45,7 @@ fun PosterCard(
             .padding(8.dp)
     ) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .width(220.dp)
                 .height(320.dp)
                 .clip(RoundedCornerShape(6.dp))
