@@ -3,6 +3,9 @@ package com.tylerbailly.myflix.ui.title
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -27,6 +33,7 @@ import coil.compose.AsyncImage
 import com.tylerbailly.myflix.network.Provider
 import com.tylerbailly.myflix.network.TitleDetail
 import com.tylerbailly.myflix.ui.theme.BrandRed
+import com.tylerbailly.myflix.ui.theme.FocusColor
 
 @Composable
 fun TitleDetailScreen(
@@ -68,9 +75,25 @@ fun TitleDetailScreen(
                     t.maturityRating?.let { Text("$it  ", color = MaterialTheme.colorScheme.onBackground) }
                 }
 
+                val playFocusRequester = remember { FocusRequester() }
+                val playInteractionSource = remember { MutableInteractionSource() }
+                val isPlayFocused by playInteractionSource.collectIsFocusedAsState()
+                val watchlistInteractionSource = remember { MutableInteractionSource() }
+                val isWatchlistFocused by watchlistInteractionSource.collectIsFocusedAsState()
+
+                // Land the D-pad cursor on Play by default -- otherwise there's
+                // no visual indication of where focus starts on this screen.
+                LaunchedEffect(t.id) { if (t.status == "READY") playFocusRequester.requestFocus() }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
                     if (t.status == "READY") {
-                        Button(onClick = { handlePlay(t, context, onPlayUpload) }) {
+                        Button(
+                            onClick = { handlePlay(t, context, onPlayUpload) },
+                            interactionSource = playInteractionSource,
+                            modifier = Modifier
+                                .focusRequester(playFocusRequester)
+                                .border(width = if (isPlayFocused) 3.dp else 0.dp, color = FocusColor)
+                        ) {
                             Text(t.play?.label ?: "Play")
                         }
                     } else {
@@ -79,7 +102,11 @@ fun TitleDetailScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                     }
-                    OutlinedButton(onClick = { viewModel.toggleWatchlist(t.id) }) {
+                    OutlinedButton(
+                        onClick = { viewModel.toggleWatchlist(t.id) },
+                        interactionSource = watchlistInteractionSource,
+                        modifier = Modifier.border(width = if (isWatchlistFocused) 3.dp else 0.dp, color = FocusColor)
+                    ) {
                         Text(if (t.inWatchlist) "Remove from My List" else "Add to My List")
                     }
                 }
