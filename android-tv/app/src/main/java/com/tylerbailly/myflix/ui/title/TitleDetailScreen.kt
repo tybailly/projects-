@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.tylerbailly.myflix.network.Provider
 import com.tylerbailly.myflix.network.TitleDetail
 import com.tylerbailly.myflix.ui.theme.BrandRed
 
@@ -103,16 +104,43 @@ fun TitleDetailScreen(
 
 /**
  * Mirrors getPlayAction() from the web app: PROVIDER titles deep-link out
- * (Android resolves to the installed streaming app or a browser), TRAILER
- * titles deep-link to the YouTube app rather than embedding a player, and
- * UPLOAD titles play inline via this app's own ExoPlayer screen.
+ * (see openProviderApp below), TRAILER titles deep-link to the YouTube app
+ * rather than embedding a player, and UPLOAD titles play inline via this
+ * app's own ExoPlayer screen.
  */
 private fun handlePlay(title: TitleDetail, context: android.content.Context, onPlayUpload: (String) -> Unit) {
     val play = title.play ?: return
     when {
-        play.external -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(play.href)))
+        play.external -> openProviderApp(context, title.provider, play.href)
         title.source == "TRAILER" && title.trailerKey != null ->
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=${title.trailerKey}")))
         else -> onPlayUpload(title.id)
     }
+}
+
+/** Android TV package names for the providers we link out to (see prisma/sync-tmdb.ts for their slugs). */
+private val PROVIDER_TV_PACKAGES = mapOf(
+    "disney-plus" to "com.disney.disneyplus",
+    "paramount-plus" to "com.cbs.app",
+    "peacock" to "com.peacocktv.peacockandroid",
+    "prime-video" to "com.amazon.avod.thirdpartyclient"
+)
+
+/**
+ * There's no public per-title deep-link API for these services, so `webUrl`
+ * (from getPlayAction on the backend) just points at that service's own
+ * search page. Android TV streaming apps generally don't register App
+ * Links for their web search pages the way phone apps might, so firing
+ * ACTION_VIEW at that URL falls through to a browser instead of the
+ * installed app. Launching the app directly at least lands the user
+ * inside the right service, where they can search for the title
+ * themselves; only fall back to the web URL if that app isn't installed.
+ */
+private fun openProviderApp(context: android.content.Context, provider: Provider?, webUrl: String) {
+    val packageName = PROVIDER_TV_PACKAGES[provider?.slug]
+    val launchIntent = packageName?.let {
+        context.packageManager.getLeanbackLaunchIntentForPackage(it)
+            ?: context.packageManager.getLaunchIntentForPackage(it)
+    }
+    context.startActivity(launchIntent ?: Intent(Intent.ACTION_VIEW, Uri.parse(webUrl)))
 }
