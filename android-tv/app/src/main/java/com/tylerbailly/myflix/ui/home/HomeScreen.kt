@@ -34,6 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusGroup
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -105,16 +110,19 @@ fun HomeScreen(
     }
 }
 
-/** An auto-advancing banner cycling through the newest titles synced from subscribed providers. */
+/**
+ * An auto-advancing banner cycling through the newest titles synced from
+ * subscribed providers. D-pad Left/Right steps through it manually (and
+ * restarts the auto-advance countdown, so it doesn't immediately jump
+ * again right after a manual step).
+ */
 @Composable
 private fun NewReleasesCarousel(releases: List<NewRelease>, onTitleClick: (String) -> Unit) {
     var index by remember(releases) { mutableIntStateOf(0) }
 
-    LaunchedEffect(releases) {
-        while (true) {
-            delay(6000)
-            index = (index + 1) % releases.size
-        }
+    LaunchedEffect(releases, index) {
+        delay(6000)
+        index = (index + 1) % releases.size
     }
 
     val current = releases[index]
@@ -126,6 +134,20 @@ private fun NewReleasesCarousel(releases: List<NewRelease>, onTitleClick: (Strin
             .fillMaxWidth()
             .height(220.dp)
             .border(width = if (isFocused) 3.dp else 0.dp, color = FocusColor)
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                when (event.key) {
+                    Key.DirectionRight -> {
+                        index = (index + 1) % releases.size
+                        true
+                    }
+                    Key.DirectionLeft -> {
+                        index = (index - 1 + releases.size) % releases.size
+                        true
+                    }
+                    else -> false
+                }
+            }
             .clickable(interactionSource = interactionSource, indication = null) { onTitleClick(current.id) }
     ) {
         Crossfade(targetState = current, label = "newReleaseBackdrop") { release ->
