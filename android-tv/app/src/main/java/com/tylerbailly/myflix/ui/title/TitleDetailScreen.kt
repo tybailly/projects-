@@ -121,9 +121,9 @@ private fun handlePlay(title: TitleDetail, context: android.content.Context, onP
 /** Android TV package names for the providers we link out to (see prisma/sync-tmdb.ts for their slugs). */
 private val PROVIDER_TV_PACKAGES = mapOf(
     "disney-plus" to "com.disney.disneyplus",
-    "paramount-plus" to "com.cbs.app",
+    "paramount-plus" to "com.cbs.ott",
     "peacock" to "com.peacocktv.peacockandroid",
-    "prime-video" to "com.amazon.avod.thirdpartyclient"
+    "prime-video" to "com.amazon.amazonvideo.livingroom"
 )
 
 /**
