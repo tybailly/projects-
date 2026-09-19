@@ -15,6 +15,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusGroup
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -79,7 +81,10 @@ fun ProviderScreen(slug: String, onTitleClick: (String) -> Unit, viewModel: Prov
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
                         )
-                        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp)) {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 18.dp),
+                            modifier = Modifier.focusGroup().focusRestorer()
+                        ) {
                             items(genre.titles) { title ->
                                 PosterCard(name = title.name, posterUrl = title.posterUrl, onClick = { onTitleClick(title.id) })
                             }

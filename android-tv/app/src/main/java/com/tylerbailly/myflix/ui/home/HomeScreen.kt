@@ -32,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusGroup
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -184,7 +186,14 @@ private fun TitleRow(heading: String, content: androidx.compose.foundation.lazy.
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
         )
-        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), content = content)
+        // Without this, D-pad Down from another row just focuses whatever
+        // item happens to sit in roughly the same column, scrolling this
+        // row past its first tile or two instead of starting at the left edge.
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 18.dp),
+            modifier = Modifier.focusGroup().focusRestorer(),
+            content = content
+        )
     }
 }
 
