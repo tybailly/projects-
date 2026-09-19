@@ -1,6 +1,9 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.tylerbailly.myflix.ui.home
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,7 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusGroup
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -88,8 +93,8 @@ fun HomeScreen(
 
                 if (data.providers.isNotEmpty()) {
                     item {
-                        TitleRow("Streaming Services") {
-                            items(data.providers) { provider -> ProviderTile(provider, onClick = { onProviderClick(provider.slug) }) }
+                        TitleRow("Streaming Services", data.providers) { provider, modifier ->
+                            ProviderTile(provider, modifier = modifier, onClick = { onProviderClick(provider.slug) })
                         }
                     }
                 }
@@ -192,15 +197,22 @@ private fun NewReleasesCarousel(releases: List<NewRelease>, onTitleClick: (Strin
 
 @Composable
 private fun PosterRow(heading: String, titles: List<Title>, onTitleClick: (String) -> Unit) {
-    TitleRow(heading) {
-        items(titles) { title ->
-            PosterCard(name = title.name, posterUrl = title.posterUrl, badge = title.status, onClick = { onTitleClick(title.id) })
-        }
+    TitleRow(heading, titles) { title, modifier ->
+        PosterCard(name = title.name, posterUrl = title.posterUrl, badge = title.status, modifier = modifier, onClick = { onTitleClick(title.id) })
     }
 }
 
+/**
+ * A horizontally-scrolling row of items with a heading. The first item gets
+ * a dedicated FocusRequester wired as focusRestorer's fallback -- without an
+ * explicit target, D-pad Down from another row lands wherever Compose's
+ * default 2D search happens to pick (usually whatever roughly shares a
+ * column with the previously-focused item), scrolling this row past its
+ * first tile or two instead of always starting at the left edge.
+ */
 @Composable
-private fun TitleRow(heading: String, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
+private fun <T> TitleRow(heading: String, items: List<T>, itemContent: @Composable (T, Modifier) -> Unit) {
+    val firstItemFocusRequester = remember { FocusRequester() }
     Column(modifier = Modifier.padding(top = 16.dp)) {
         Text(
             heading,
@@ -208,24 +220,24 @@ private fun TitleRow(heading: String, content: androidx.compose.foundation.lazy.
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
         )
-        // Without this, D-pad Down from another row just focuses whatever
-        // item happens to sit in roughly the same column, scrolling this
-        // row past its first tile or two instead of starting at the left edge.
         LazyRow(
             contentPadding = PaddingValues(horizontal = 18.dp),
-            modifier = Modifier.focusGroup().focusRestorer(),
-            content = content
-        )
+            modifier = Modifier.focusGroup().focusRestorer { firstItemFocusRequester }
+        ) {
+            itemsIndexed(items) { index, item ->
+                itemContent(item, if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+            }
+        }
     }
 }
 
 @Composable
-private fun ProviderTile(provider: Provider, onClick: () -> Unit) {
+private fun ProviderTile(provider: Provider, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(6.dp)
             .height(80.dp)
             .background(SurfaceDark)
