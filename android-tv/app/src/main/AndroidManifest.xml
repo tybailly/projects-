@@ -9,6 +9,19 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!--
+      Android 11+ hides other installed apps from PackageManager queries
+      (getLaunchIntentForPackage, etc.) unless explicitly declared here --
+      without this, launching a subscribed provider's TV app directly
+      silently fails (returns null) even when it's installed.
+    -->
+    <queries>
+        <package android:name="com.disney.disneyplus" />
+        <package android:name="com.cbs.ott" />
+        <package android:name="com.peacocktv.peacockandroid" />
+        <package android:name="com.amazon.amazonvideo.livingroom" />
+    </queries>
+
     <application
         android:name=".MyFlixApplication"
         android:allowBackup="true"
