@@ -223,4 +223,10 @@ cutting the shootout altogether.
 - Which modular urban environment kit to use for M2 (needs sourcing from
   Fab — pick something on the lighter/stylized end, not another
   Nanite-heavy pack, given the RAM lesson just learned).
-- Target platform beyond PC (this plan assumes PC only).
+- ~~Target platform beyond PC~~ — resolved: **PC only**. Console
+  distribution (Xbox/PlayStation) requires acceptance into Microsoft's
+  ID@Xbox and/or Sony's PlayStation Partners developer programs before the
+  platform SDKs/Unreal platform extensions are even accessible, plus
+  certification (TCR/TRC) before anything ships — none of that is worth
+  pursuing for a vertical-slice demo. Revisit only if this grows into a
+  commercial pursuit.
