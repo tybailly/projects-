@@ -74,27 +74,35 @@ driving — are all things UE5 ships strong first-party or free tooling for:
   manual optimization.
 - **MetaHuman** for the player character and named NPCs.
 - **Chaos Vehicles** plugin for the patrol car.
-- **Epic's free City Sample project** (built for the Matrix Awakens demo) —
-  this is the single biggest scope-cutter available. It ships with:
-  - A dense, walkable city block-out with modular buildings, ready to reskin.
-  - **Mass AI** crowd and traffic simulation already wired up (pedestrians
-    walking sidewalks, cars driving streets).
-  - A playable vehicle already integrated with Chaos Vehicles.
 
-  Recommendation: **start from City Sample instead of a blank/ThirdPerson
-  template**, and reskin/trim it rather than building crowd AI and traffic
-  from scratch. This alone could cut 3-4 weeks off the plan below. Downside:
-  it's a heavy project (large download, needs a decent GPU) and its code is
-  denser to learn than a template — factor in a few extra days up front to
-  get oriented in it.
+~~Epic's free City Sample project~~ was evaluated as a scope-cutting base
+(dense city block-out, Mass AI crowds/traffic, a pre-built vehicle) but
+**ruled out after hands-on testing**: its recommended spec is ~64GB RAM, and
+on the 32GB dev machine World Partition regions wouldn't reliably stream in
+even after the usual fixes (Data Layer visibility, forcing region loads,
+repositioning the camera). Not worth fighting further — see the milestones
+below for the from-scratch replacements this brings back into scope.
+
+- **Base project**: start from the plain **ThirdPerson template** instead
+  (M0). Far lighter, opens instantly, no World Partition/streaming to fight.
+- **Driving reference**: rather than City Sample's vehicle, start from UE's
+  own built-in **Vehicle template** (New Project → Games → Vehicle). It
+  ships a working Chaos Vehicle pawn with a rigged car mesh already wired
+  up — much lighter than City Sample, and the pawn/animation setup can be
+  copied into the main project for M5.
+- **Environment geometry**: with no City Sample buildings to reskin, M2
+  needs a modular urban/city environment kit sourced from Fab (free or
+  paid) to dress the street — pick one on the lighter/stylized end rather
+  than a hyper-detailed Nanite-heavy pack, both for iteration speed and to
+  stay comfortable on 32GB RAM.
 
 ## Milestones
 
 ### M0 — Project setup (2-4 days)
 - Install UE 5.4+, set up Git LFS (binary assets — do **not** commit large
   uasset/uexp files without LFS).
-- Stand up project from City Sample (or ThirdPerson template if City Sample
-  proves too heavy to work with).
+- Stand up project from the **ThirdPerson template** (City Sample ruled out
+  — see Engine decision above).
 - Confirm project runs and packages a trivial build end-to-end before any
   content work — catches toolchain problems early.
 
@@ -111,15 +119,17 @@ driving — are all things UE5 ships strong first-party or free tooling for:
   into, so build it generically now.
 - Minimal HUD: objective text, interact prompt.
 
-### M2 — Street block-out & NYC dressing (2-3 weeks, less if built on City Sample)
-- Trim/reskin a few blocks to a specific street identity (signage, yellow
-  cabs as set dressing, hot dog cart, subway stair entrance, hydrants).
+### M2 — Street block-out & NYC dressing (2-3 weeks)
+- Source a modular urban/city environment kit from Fab (see Engine decision
+  above) and block out a few blocks to a specific street identity (signage,
+  yellow cabs as set dressing, hot dog cart, subway stair entrance,
+  hydrants).
 - Lighting pass (time of day, Lumen).
 - Ambient audio bed (traffic hum, distant sirens, crowd murmur).
 
 ### M3 — NPC pedestrians & incident system (2-3 weeks)
-- Pedestrian crowd: reuse Mass AI from City Sample if adopted, else a
-  simple Behavior Tree + EQS wander/cross-street setup.
+- Pedestrian crowd: simple Behavior Tree + EQS wander/cross-street setup
+  (built from scratch — no Mass AI to reuse now that City Sample is out).
 - Incident framework, built **data-driven** so incident #2 is cheap once
   incident #1 works:
   - `UIncidentDefinition` data asset: trigger volume/actor, dialogue lines,
@@ -150,11 +160,13 @@ scripted antagonist, one encounter, no reload/ammo economy, no cover system.
   isolation.
 
 ### M5 — Driving (1-2 weeks)
-- Chaos Vehicle patrol car (reuse City Sample's if adopted).
+- Chaos Vehicle patrol car, built from UE's built-in Vehicle template (see
+  Engine decision above) rather than City Sample's.
 - Enter/exit vehicle state machine, camera swap.
 - Radio call barks patrol car → incident #2 location as the transition beat.
-- Traffic AI: reuse Mass AI if available; otherwise cut to empty/static
-  parked cars for the demo rather than hand-building traffic AI.
+- Traffic AI: cut to empty/static parked cars for the demo rather than
+  hand-building traffic AI (no Mass AI to reuse now that City Sample is
+  out — this scope cut is effectively locked in, not just a fallback).
 
 ### M6 — Flow wiring & incident #2 (1-2 weeks)
 - Game mode / state machine: intro → incident 1 → drive → incident 2 → end
@@ -169,10 +181,11 @@ scripted antagonist, one encounter, no reload/ammo economy, no cover system.
 - Packaged Windows build.
 - Capture a gameplay trailer.
 
-**Rough total: 12-17 weeks solo/part-time** (up from 10-14 weeks — the
-combat system in M4 is the added cost of the shootout climax), materially
-shorter on M0-M3/M5 if City Sample's crowd/traffic/vehicle systems are
-adopted rather than rebuilt.
+**Rough total: 12-17 weeks solo/part-time.** These milestone estimates
+already assumed the from-scratch fallback as the baseline (City Sample was
+only ever an optional accelerant, now dropped), so the total is unchanged
+by ruling it out — it just means M2/M3/M5 land at the fuller end of their
+ranges rather than the shortened one.
 
 ## Code split
 
@@ -196,14 +209,18 @@ cutting the shootout altogether.
 1. Traffic AI (parked/static cars are fine)
 2. Full crowd AI (a handful of scripted/canned pedestrians instead of a
    living crowd system)
-3. MetaHuman player (use a marketplace/City Sample stand-in character)
+3. MetaHuman player (use a marketplace stand-in character instead)
 4. Combat retry/checkpoint loop (single unmissable scripted beat instead)
 
 ## Open decisions
 
-- ~~City Sample as base vs. blank template~~ — resolved. Dev hardware
-  (Windows 11, RTX 5070 8GB VRAM, 32GB RAM, Core Ultra 9 275HX) clears
-  Epic's recommended spec for City Sample with margin. Adopt City Sample as
-  the M0 base; the install/first-load in M0 is now a sanity check rather
-  than a real go/no-go gate.
+- ~~City Sample as base vs. blank template~~ — resolved (reversed from the
+  earlier call). Despite clearing Epic's recommended spec on paper, hands-on
+  testing showed World Partition streaming was unreliable on 32GB RAM.
+  Dropped City Sample; base project is the ThirdPerson template (M0), with
+  UE's built-in Vehicle template as the M5 driving reference and a sourced
+  modular environment kit for M2 (all detailed in Engine decision above).
+- Which modular urban environment kit to use for M2 (needs sourcing from
+  Fab — pick something on the lighter/stylized end, not another
+  Nanite-heavy pack, given the RAM lesson just learned).
 - Target platform beyond PC (this plan assumes PC only).
